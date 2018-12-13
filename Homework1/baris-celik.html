@@ -1,0 +1,459 @@
+<!-- Baris Celik - N18136522 -->
+<!doctype html>
+<html>
+<head>
+    <title>Baris-Celik</title>
+    <style>
+        body {
+            background-color: grey;
+        }
+
+        canvas {
+            background-color: white;
+        }
+    </style>
+    <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec3 a_vertex_position;
+		varying highp vec4 vColor;
+
+        uniform vec3 uOffset;
+        uniform vec2 u_resolution;
+        uniform mat3 u_matrix;
+
+        void main() {
+            // Add offset to position, then multiply the position by the matrix.
+            vec2 position = (u_matrix * (a_vertex_position+uOffset)).xy;
+
+            // convert the position from pixels to 0.0 to 1.0
+            vec2 zeroToOne = position / u_resolution;
+
+            // convert from 0->1 to 0->2
+            vec2 zeroToTwo = zeroToOne * 2.0;
+
+            // convert from 0->2 to -1->+1 (clipspace)
+            vec2 clipSpace = zeroToTwo - 1.0;
+
+            gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+            //vColor = vec4(a_vertex_color, 1.0);
+        }
+
+    </script>
+    <script id="shader-fs" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform vec4 u_color;
+
+        void main() {
+            gl_FragColor = u_color;
+        }
+
+    </script>
+    <script src="raf_polyfill.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.4/math.js"></script>
+    <script>
+        var gl = null,
+            canvas = null,
+            glProgram = null,
+            fragmentShader = null,
+            vertexShader = null;
+
+        var translation = [500, 1400,
+            1300, 1400,
+            900, 800];
+
+        var squarePositions = [150, 430,
+            390, 430,
+            265, 240];
+        var angleInRadians = 0;
+        var scale = [1, 1, 0.5, 0.5];
+
+        // Colors
+        var yellowColor = [0.5, 0.5, 0, 1];
+        var redColor = [1, 0, 0, 1];
+        var greenColor = [0, 1, 0, 1];
+        var blueColor = [0, 0, 1, 1];
+        var playerColor = [0, 0, 0, 1];
+        var orbitColor = [0.5, 0.5, 0.5, 1];
+        var greyColor = [0.8, 0.8, 0.8, 1];
+        var colors = [yellowColor, greenColor, blueColor, playerColor, redColor];
+
+        //starting position
+        var playerPos = 2;
+
+        var hasBlinkedRed = false;
+        var cubeId = 0;
+
+        //closest cube id
+        var smallestId = -1;
+
+        // game loop
+        var lost = false;
+
+        // look up where the vertex data needs to go.
+        var positionLocation = null;
+
+        // lookup uniforms
+        var resolutionLocation = null;
+        var colorLocation = null;
+        var matrixLocation = null;
+        var uOffsetLocation = null;
+
+        // Create a buffer to put positions in
+        var positionBuffer = null,
+            circleBuffer = null;
+
+        var verticeItemSize = 0,
+            verticeNumItems = 0;
+
+        var deltaTime = 1 / 60;
+
+        // matrix operations
+        var matrixOperations3x3 = {
+            translation: function (tx, ty) {
+                return [
+                    1, 0, 0,
+                    0, 1, 0,
+                    tx, ty, 1
+                ];
+            },
+
+            rotation: function (angleInRadians) {
+                var c = Math.cos(angleInRadians);
+                var s = Math.sin(angleInRadians);
+                return [
+                    c, -s, 0,
+                    s, c, 0,
+                    0, 0, 1
+                ];
+            },
+
+            scaling: function (sx, sy) {
+                return [
+                    sx, 0, 0,
+                    0, sy, 0,
+                    0, 0, 1
+                ];
+            },
+
+            multiply: function (a, b) {
+                var a00 = a[0 * 3 + 0];
+                var a01 = a[0 * 3 + 1];
+                var a02 = a[0 * 3 + 2];
+                var a10 = a[1 * 3 + 0];
+                var a11 = a[1 * 3 + 1];
+                var a12 = a[1 * 3 + 2];
+                var a20 = a[2 * 3 + 0];
+                var a21 = a[2 * 3 + 1];
+                var a22 = a[2 * 3 + 2];
+                var b00 = b[0 * 3 + 0];
+                var b01 = b[0 * 3 + 1];
+                var b02 = b[0 * 3 + 2];
+                var b10 = b[1 * 3 + 0];
+                var b11 = b[1 * 3 + 1];
+                var b12 = b[1 * 3 + 2];
+                var b20 = b[2 * 3 + 0];
+                var b21 = b[2 * 3 + 1];
+                var b22 = b[2 * 3 + 2];
+                return [
+                    b00 * a00 + b01 * a10 + b02 * a20,
+                    b00 * a01 + b01 * a11 + b02 * a21,
+                    b00 * a02 + b01 * a12 + b02 * a22,
+                    b10 * a00 + b11 * a10 + b12 * a20,
+                    b10 * a01 + b11 * a11 + b12 * a21,
+                    b10 * a02 + b11 * a12 + b12 * a22,
+                    b20 * a00 + b21 * a10 + b22 * a20,
+                    b20 * a01 + b21 * a11 + b22 * a21,
+                    b20 * a02 + b21 * a12 + b22 * a22
+                ];
+            }
+        };
+
+        // resizes -1/1 system to canvas size
+        function resizeCanvasToDisplaySize(canvas, multiplier) {
+            multiplier = multiplier || 1;
+            var width = canvas.clientWidth * multiplier | 0;
+            var height = canvas.clientHeight * multiplier | 0;
+            if (canvas.width !== width || canvas.height !== height) {
+                canvas.width = width;
+                canvas.height = height;
+                return true;
+            }
+            return false;
+        }
+
+        function radian(degree) {
+            return degree * (Math.PI / 180);
+        }
+
+        function initWebGL() {
+            canvas = document.getElementById("my-canvas");
+
+            try {
+                gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+            } catch (e) {
+            }
+
+            if (gl) {
+                initShaders();
+                initApplicationProgram();
+                timedCubeSelect();
+                initClickHandler();
+                loop();
+            } else {
+                alert("Error: Your browser does not appear to support WebGL.");
+            }
+        }
+
+        // player input
+        function initClickHandler() {
+            canvas.addEventListener('click', function (event) {
+                if (hasBlinkedRed == false || smallestId != cubeId) {
+                    alert('You Lose');
+                    lost = true;
+                } else {
+                    smallestId = -1;
+                    playerPos = cubeId;
+                    if (!lost) {
+                        timedCubeSelect();
+                    }
+                }
+                hasBlinkedRed = false;
+            }, false);
+        }
+
+        // timed event that shows a cube red
+        function timedCubeSelect() {
+            setTimeout(function () {
+                if (!lost) {
+                    hasBlinkedRed = !hasBlinkedRed;
+                    cubeId = Math.floor(Math.random() * Math.floor(3));
+                    if (cubeId == playerPos) {
+                        cubeId = (cubeId + 1) % 3;
+                    }
+                }
+            }, 3000);
+        }
+
+        function initApplicationProgram() {
+            setupBuffers();
+            getShaderVariableLocations();
+        }
+
+        function getShaderVariableLocations() {
+            // look up where the vertex data needs to go.
+            positionLocation = gl.getAttribLocation(glProgram, "a_vertex_position");
+            uOffsetLocation = gl.getUniformLocation(glProgram, "uOffset");
+            // lookup uniforms
+            resolutionLocation = gl.getUniformLocation(glProgram, "u_resolution");
+            // vertexColorAttribute = gl.getAttribLocation(glProgram, "a_vertex_color");
+            colorLocation = gl.getUniformLocation(glProgram, "u_color");
+            matrixLocation = gl.getUniformLocation(glProgram, "u_matrix");
+        }
+
+        function clearScene() {
+            //set the clear color to a shade of green
+            gl.clearColor(0.2, 0.2, 0.2, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.enable(gl.DEPTH_TEST);
+
+            resizeCanvasToDisplaySize(gl.canvas);
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+        }
+
+        function initShaders() {
+            //get shader source
+            var fs_source = document.getElementById('shader-fs').innerHTML,
+                vs_source = document.getElementById('shader-vs').innerHTML;
+
+            //compile shaders
+            vertexShader = makeShader(vs_source, gl.VERTEX_SHADER);
+            fragmentShader = makeShader(fs_source, gl.FRAGMENT_SHADER);
+
+            //create program
+            glProgram = gl.createProgram();
+
+            //attach and link shaders to the program
+            gl.attachShader(glProgram, vertexShader);
+            gl.attachShader(glProgram, fragmentShader);
+            gl.linkProgram(glProgram);
+
+            if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
+                alert("Unable to initialize the shader program.");
+            }
+
+            //use program
+            gl.useProgram(glProgram);
+        }
+
+        function makeShader(src, type) {
+            //compile the vertex shader
+            var shader = gl.createShader(type);
+            gl.shaderSource(shader, src);
+            gl.compileShader(shader);
+
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                alert("Error compiling shader: " + gl.getShaderInfoLog(shader));
+            }
+            return shader;
+        }
+
+        function setupBuffers() {
+            var cubeVertices = new Float32Array([
+                //cube - 60x60
+                0, 0, 0.3,
+                60, 0, 0.3,
+                0, 60, 0.3,
+                0, 60, 0.3,
+                60, 0, 0.3,
+                60, 60, 0.3
+            ]);
+
+            positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, cubeVertices, gl.STATIC_DRAW);
+
+            verticeItemSize = 4;
+            verticeNumItems = cubeVertices.length / verticeItemSize;
+
+            var rotationradian = [];
+            for (var z = 0; z <= 360; z += 1) { //1, 5, 15 number of line draw
+                rotationradian.push(130 * Math.cos(radian(z)), 130 * Math.sin(radian(z)), 0);
+            }
+
+            circleBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, circleBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rotationradian), gl.STATIC_DRAW);
+        }
+
+        // calculates the model matrix in the order of translate rotate scale and relocate
+        function calculateModelMatrix(translation, angleInRadians, scale, dist, i) {
+            var translationMatrix = matrixOperations3x3.translation(translation[(i * 2)], translation[(i * 2) + 1]);
+            var rotationMatrix = matrixOperations3x3.rotation(angleInRadians);
+            var scaleMatrix = matrixOperations3x3.scaling(scale[0], scale[1]);
+            var moveOriginMatrix = matrixOperations3x3.translation(dist, dist);
+
+            // Multiply the matrices.
+            var matrix = matrixOperations3x3.multiply(translationMatrix, rotationMatrix);
+            matrix = matrixOperations3x3.multiply(matrix, scaleMatrix);
+            matrix = matrixOperations3x3.multiply(matrix, moveOriginMatrix);
+            return matrix;
+        }
+
+        // calculates the distance between two points
+        function calculateDistance(matrix, translation) {
+            var smallestDistance = 100000;
+            for (var j = 0; j < 3; j++) {
+                var dist = math.distance([matrix[6], matrix[7]], [translation[(j * 2)], translation[(j * 2) + 1]]);
+                if (dist < smallestDistance) {
+                    smallestDistance = dist;
+                    smallestId = j;
+                }
+            }
+        }
+
+        function drawScene() {
+            gl.enableVertexAttribArray(positionLocation);
+
+            var size = 3;          // 3 components per iteration
+            var type = gl.FLOAT;   // the data is 32bit floats
+            var normalize = false; // don't normalize the data
+            var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+            var offset = 0;        // start at the beginning of the buffer
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.vertexAttribPointer(positionLocation, size, type, normalize, stride, offset);
+            gl.uniform3fv(uOffsetLocation, [0, 0, 0]);
+
+            // set the resolution
+            gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
+
+            //rotate continuously
+            if (!lost) {
+                if (angleInRadians < radian(360)) {
+                    angleInRadians = angleInRadians + deltaTime;
+                } else {
+                    angleInRadians = 0;
+                }
+            }
+
+            // Compute the matrices
+            for (var i = 0; i < 3; i++) {
+                // if iteration is at player position draw the player alongside with it
+                if (i == playerPos) {
+                    var matrix = calculateModelMatrix(translation, -angleInRadians, [scale[2], scale[3]], -700, i);
+
+                    calculateDistance(matrix, translation);
+
+                    if (!lost) {
+                        gl.uniform4fv(colorLocation, playerColor);
+                    } else {
+                        gl.uniform4fv(colorLocation, greyColor);
+                    }
+
+                    // Set the matrix.
+                    gl.uniformMatrix3fv(matrixLocation, false, matrix);
+
+                    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+                }
+
+                var matrix = calculateModelMatrix(translation, angleInRadians, [scale[0], scale[1]], -90, i);
+
+                if (hasBlinkedRed && cubeId == i && cubeId != playerPos) {
+                    gl.uniform4fv(colorLocation, redColor);
+                } else if (lost) {
+                    gl.uniform4fv(colorLocation, greyColor);
+                } else {
+                    gl.uniform4fv(colorLocation, colors[i]);
+                }
+                // Set the matrix.
+                gl.uniformMatrix3fv(matrixLocation, false, matrix);
+
+                // Draw the geometry.
+                var count = 6;  // 1 cube, 2 triangles , 3 points per triangle = 6
+                gl.drawArrays(gl.TRIANGLES, 0, count);
+            }
+
+            //draw circles
+            for (var i = 0; i < 3; i++) {
+
+                gl.uniform3fv(uOffsetLocation, [squarePositions[(i * 2)], squarePositions[(i * 2) + 1], 0]);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, circleBuffer);
+                gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+                var cmatrix = calculateModelMatrix(translation, 0, [1, 1], 0, i);
+
+                if (!lost) {
+                    gl.uniform4fv(colorLocation, orbitColor);
+                } else {
+                    gl.uniform4fv(colorLocation, greyColor);
+                }
+
+                // Set the matrix.
+                gl.uniformMatrix3fv(matrixLocation, false, cmatrix);
+
+                gl.drawArrays(gl.LINES, 0, 360);
+            }
+        }
+
+        function update() {
+            clearScene();
+            drawScene();
+        }
+
+        function loop() {
+            update();
+            requestAnimationFrame(loop);
+        }
+
+
+    </script>
+</head>
+<body onload="initWebGL()">
+<canvas id="my-canvas" width="600" height="600">
+    Your browser does not support the HTML5 canvas element.
+</canvas>
+</body>
+</html>

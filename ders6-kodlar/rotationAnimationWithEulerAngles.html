@@ -1,0 +1,497 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Rotation with Euler</title>
+		<style>
+			body{ background-color: grey; }
+			canvas{ background-color: white; }
+		</style>
+
+		<script src="raf_polyfill.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.4/math.js"></script>
+
+
+
+		<script id="shader-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec3 aVertexColor;
+			varying highp vec4 vColor;
+
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+
+			void main(void) {				
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+				vColor = vec4(aVertexColor, 1.0);
+			}
+		</script>
+
+		<script id="shader-fs" type="x-shader/x-fragment">
+			varying highp vec4 vColor;
+			void main(void) {
+               gl_FragColor = vColor;
+			}
+		</script>
+
+		<script>
+			var gl = null,
+				canvas = null,
+				glProgram = null,
+				fragmentShader = null,
+				vertexShader = null;
+				
+			var vertexPositionAttribute = null,
+				vertexColorAttribute = null;
+
+			// look up the text canvas.
+			var textCanvas;
+
+			// make a 2D context for it
+			var ctx;
+
+			
+			function initWebGL()
+			{
+				canvas = document.getElementById("my-canvas");  
+				try{
+					gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");					
+				}catch(e){
+				}
+
+				textCanvas = document.getElementById("text");
+				ctx = document.createTextNode("");
+				textCanvas.appendChild(ctx);
+
+				if(gl)
+				{
+					initShaders();
+					initApplicationProgram();
+					loop();
+				}else{	
+					alert(  "Error: Your browser does not appear to support WebGL.");
+				}
+			}
+
+			function initApplicationProgram(){
+				setupBuffers();
+    			getShaderVariableLocations();
+			}
+
+			function getShaderVariableLocations(){
+				uMVMatrixLoc = gl.getUniformLocation(glProgram, "uMVMatrix");   
+				uPMatrixLoc = gl.getUniformLocation(glProgram, "uPMatrix");            
+				vertexPositionAttribute = gl.getAttribLocation(glProgram, "aVertexPosition");
+				vertexColorAttribute = gl.getAttribLocation(glProgram, "aVertexColor");
+			}
+			
+			function clearScene()
+			{
+				//set the clear color to a shade of green
+				gl.clearColor(0.08, 0.74, 0.8, 1.0); 	
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    			gl.enable(gl.DEPTH_TEST);
+				
+				//console.log(canvas.width + " " + canvas.height);
+
+				gl.viewport(0, 0, canvas.width, canvas.height);
+				
+
+				
+			}
+
+			function initShaders()
+			{
+				//get shader source
+				var fs_source = document.getElementById('shader-fs').innerHTML,
+					vs_source = document.getElementById('shader-vs').innerHTML;
+
+				//compile shaders	
+                vertexShader = makeShader(vs_source, gl.VERTEX_SHADER);
+				fragmentShader = makeShader(fs_source, gl.FRAGMENT_SHADER);
+				
+				//create program
+				glProgram = gl.createProgram();
+				
+				//attach and link shaders to the program
+                gl.attachShader(glProgram, vertexShader);
+                gl.attachShader(glProgram, fragmentShader);
+                gl.linkProgram(glProgram);
+
+                if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
+                    alert("Unable to initialize the shader program.");
+                }
+				
+				//use program
+				gl.useProgram(glProgram);
+			}
+			
+			function makeShader(src, type)
+			{
+				//compile the vertex shader
+				var shader = gl.createShader(type);
+                gl.shaderSource(shader, src);
+                gl.compileShader(shader);
+
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    alert("Error compiling shader: " + gl.getShaderInfoLog(shader));
+                }
+				return shader;
+			}
+
+			
+			function setupBuffers()
+			{
+				var cubeVertices = [
+
+				//bottomFace
+				-0.5,-0.5,-0.5,
+				0.5,-0.5,-0.5,
+				-0.5,-0.5,0.5,
+				0.5,-0.5,-0.5,
+				-0.5,-0.5,0.5,
+				0.5,-0.5,0.5,
+				
+				//rightFace
+				0.5,-0.5,-0.5,
+				0.5,-0.5,0.5,
+				0.5,0.5,0.5,
+				0.5,-0.5,-0.5,
+				0.5,0.5,0.5,
+				0.5,0.5,-0.5,
+				
+				//topFace
+				0.5,0.5,0.5,
+				-0.5,0.5,0.5,
+				0.5,0.5,-0.5,
+				-0.5,0.5,0.5,
+				-0.5,0.5,-0.5,
+				0.5,0.5,-0.5,
+	
+				//rearFace
+				-0.5,-0.5,0.5,
+				0.5,-0.5,0.5,
+				0.5,0.5,0.5,
+				-0.5,-0.5,0.5,
+				0.5,0.5,0.5,
+				-0.5,0.5,0.5,
+
+				//frontFace
+				0.5,-0.5,-0.5,
+				0.5,0.5,-0.5,
+				-0.5,0.5,-0.5,
+				-0.5,-0.5,-0.5,
+				0.5,-0.5,-0.5,
+				-0.5,0.5,-0.5,
+
+				//leftFace
+				-0.5,-0.5,-0.5,
+				-0.5,-0.5,0.5,
+				-0.5,0.5,0.5,
+				-0.5,-0.5,-0.5,
+				-0.5,0.5,0.5,
+				-0.5,0.5,-0.5
+				
+				];
+				
+				cubeVerticesBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesBuffer);
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertices), gl.STATIC_DRAW);	
+
+				var cubeVertexColors = [
+					1,0,0,
+					1,0,0,
+					1,0,0,
+					1,0,0,
+					1,0,0,
+					1,0,0,
+
+					0,1,0,
+					0,1,0,
+					0,1,0,
+					0,1,0,
+					0,1,0,
+					0,1,0,
+
+					0,0,1,
+					0,0,1,
+					0,0,1,
+					0,0,1,
+					0,0,1,
+					0,0,1,
+
+					1,1,0.5,
+					1,1,0.5,
+					1,1,0.5,
+					1,1,0.5,
+					1,1,0.5,
+					1,1,0.5,
+
+					1,0.54,0,
+					1,0.54,0,
+					1,0.54,0,
+					1,0.54,0,
+					1,0.54,0,
+					1,0.54,0,
+
+					0.58, 0, 0.82,
+					0.58, 0, 0.82,
+					0.58, 0, 0.82,
+					0.58, 0, 0.82,
+					0.58, 0, 0.82,
+					0.58, 0, 0.82
+				];
+				cubeColorBuffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, cubeColorBuffer);
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertexColors), gl.STATIC_DRAW);
+							
+			}
+
+			function calculateModelMatrix (position, eulerAngles){
+    
+				var modelMatrix = mat4.create();
+				mat4.identity(modelMatrix);
+
+				mat4.translate(modelMatrix, modelMatrix, position);    
+				mat4.rotateZ(modelMatrix, modelMatrix, eulerAngles[2]*(Math.PI / 180));       
+				mat4.rotateY(modelMatrix, modelMatrix, eulerAngles[1]*(Math.PI / 180));      
+				mat4.rotateX(modelMatrix, modelMatrix, eulerAngles[0]*(Math.PI / 180));  
+  
+
+				return modelMatrix;
+			}
+
+			function calculateViewMatrix (at, eye, up){
+				n = math.subtract(eye, at);
+				n = math.divide(n, math.norm(n));
+				u = math.cross(up, n);
+				u = math.divide(u, math.norm(u));
+				v = math.cross(n, u);
+			
+				eyeDotU = -math.dot(eye, u);
+				eyeDotV = -math.dot(eye, v);
+				eyeDotN = -math.dot(eye, n);
+			
+				u.push(eyeDotU);
+				v.push(eyeDotV);
+				n.push(eyeDotN);
+			
+				var viewMatrix = mat4.fromValues(u[0], u[1], u[2], u[3], v[0], v[1], v[2], v[3], n[0], n[1], n[2], n[3], 0, 0, 0, 1);
+				viewMatrix = mat4.transpose(viewMatrix, viewMatrix);
+
+				return viewMatrix;
+    	}
+
+			var xPositions = [0,0,0];
+			var deltaTimes = [];
+			var previousTime = 0;
+			var k = 0;
+
+			var keyFrameOrientations = [[0,90,0], [90,45,90]];
+			var keyFrameTimes = [0,10];
+
+			var startKeyFrame = 0;
+			var endKeyFrame = 1;
+
+			var currentOrientation = [0,90,0];
+			var currentPosition = [0, -2, 0];
+
+
+			function drawScene(currentTime)
+			{
+
+				var mvMatrix = mat4.create();
+			
+				gl.uniformMatrix4fv(uPMatrixLoc, false, projectionMatrix);
+
+                gl.enableVertexAttribArray(vertexPositionAttribute);
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesBuffer);
+				gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+
+				gl.enableVertexAttribArray(vertexColorAttribute);
+				gl.bindBuffer(gl.ARRAY_BUFFER, cubeColorBuffer);
+				gl.vertexAttribPointer(vertexColorAttribute, 3, gl.FLOAT, false, 0, 0);
+
+
+				t = (currentTime*0.001);
+
+				if(t < keyFrameTimes[keyFrameTimes.length - 1]){
+
+					t2 = (t-keyFrameTimes[startKeyFrame])/(keyFrameTimes[endKeyFrame]-keyFrameTimes[startKeyFrame]);
+					
+					currentOrientation = math.add(keyFrameOrientations[startKeyFrame], math.multiply(math.subtract(keyFrameOrientations[endKeyFrame], keyFrameOrientations[startKeyFrame]), t2));
+				}
+					modelMatrix = calculateModelMatrix(currentPosition, currentOrientation);
+						
+					mvMatrix = mat4.multiply(mvMatrix, viewMatrix, modelMatrix);
+					gl.uniformMatrix4fv(uMVMatrixLoc, false, mvMatrix);
+
+					gl.drawArrays(gl.TRIANGLES, 0, 36);
+				
+
+				for(var i=0; i<2; i++){
+				
+					modelMatrix = calculateModelMatrix([ 0, i*2, 0], keyFrameOrientations[i]);
+						
+					mvMatrix = mat4.multiply(mvMatrix, viewMatrix, modelMatrix);
+					gl.uniformMatrix4fv(uMVMatrixLoc, false, mvMatrix);
+
+					gl.drawArrays(gl.TRIANGLES, 0, 36);
+				
+				}						
+			}
+
+			
+			var modelMatrix = mat4.create();
+			var viewMatrix = mat4.create();
+			var projectionMatrix = mat4.create();
+
+			var cameraPositionX = 0;
+			var cameraPositionZ = -8;
+
+			var xRotationValue = 0;
+			var yRotationValue = 0;
+			var zRotationValue = 0;
+
+			//speed 
+			var translationSpeed = 1.2;
+
+			function update(currentTime)
+			{
+				clearScene();
+
+				positionCameraWihtKeyboarInput();
+
+				lookAt = [0,0,0];
+				position = [cameraPositionX, 2, cameraPositionZ]
+
+				viewMatrix = calculateViewMatrix(lookAt, position, [0,1,0]); 
+
+				near = 0.1;
+				far = 100.0;
+				fieldOfViewY = 45;
+				aspect = canvas.width / canvas.height;
+
+				mat4.perspective(projectionMatrix, fieldOfViewY, aspect, near, far);
+
+				//calculateRotationMatrix();
+				drawScene(currentTime);
+			}
+
+			var fps;
+			var counter = 0;
+			
+			requestAnimationFrame(loop);
+
+			function loop(currentTime){
+
+				if(counter == 0){
+					counter++;
+					return;
+				}
+				fps = calculateFPS(currentTime);
+				if(counter % 10 == 0){
+					ctx.nodeValue = fps;
+				}
+
+				counter++;
+
+				update(currentTime);
+				
+				//request a new update causes loop
+				//call loop again next frame
+				requestAnimationFrame(loop);
+			}
+
+			var frameCount = 0;
+			var prevTime = 0;
+			function calculateFPS(currentTime){
+				
+				fps = math.floor(1000/(currentTime - prevTime));
+				prevTime = currentTime;
+				if(k==10)
+					console.log("fps : "+fps);
+				k++;
+				return fps;
+			}
+			
+
+			//keyboard input
+			/////////////////////////
+
+			document.addEventListener('keydown', keyDownHandler, false);
+			document.addEventListener('keyup', keyUpHandler, false);
+
+			var rightPressed = false;
+			var leftPressed = false;
+			var upPressed = false;
+			var downPressed = false;
+
+			function keyDownHandler(event) {
+				if(event.keyCode == 39) {
+					rightPressed = true;
+				}
+				else if(event.keyCode == 37) {
+					leftPressed = true;
+				}
+				if(event.keyCode == 40) {
+					downPressed = true;
+				}
+				else if(event.keyCode == 38) {
+					upPressed = true;
+				}
+			}
+
+			function keyUpHandler(event) {
+				if(event.keyCode == 39) {
+					rightPressed = false;
+				}
+				else if(event.keyCode == 37) {
+					leftPressed = false;
+				}
+				if(event.keyCode == 40) {
+					downPressed = false;
+				}
+				else if(event.keyCode == 38) {
+					upPressed = false;
+				}
+			}
+
+			function positionCameraWihtKeyboarInput() {
+				if(rightPressed) {
+					cameraPositionX += 0.01;
+					/*if(cameraPositionX > 1)
+						cameraPositionX = 1;*/
+				}
+				else if(leftPressed) {
+					cameraPositionX -= 0.01;
+					/*if(cameraPositionX < -1)
+						cameraPositionX = -1;*/
+				}
+				else if(downPressed) {
+					cameraPositionZ += 0.01;
+				}
+				else if(upPressed) {
+					cameraPositionZ -= 0.01;
+				}
+				
+		}
+
+		//////////////////////////////
+
+		</script>
+	</head>
+	<link rel="stylesheet" href="style.css">
+	<body onload="initWebGL()">
+		<div class="container">
+			<canvas id="my-canvas"  width="600" height="600"></canvas>
+			<div id="overlay">
+			  <div>FPS: <span id="text"></span></div>
+			</div>
+		  </div>	
+	</body>
+
+</html>
+
+

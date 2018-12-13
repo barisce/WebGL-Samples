@@ -1,0 +1,11 @@
+Kullanılan bounding box yöntemi: Poor Fit Bounding Sphere
+
+Kullanımı: Bir mesh'in bütün verticelerini dolaşıp minimum ve maximum x, y ve z değerlerini buluyorum. 
+Bulduğum iki değer arasındaki uzaklık bana küremin çapını veriyor. Bu iki noktanın arası küremin 
+merkezi oluyor.
+
+Tight Bounding Sphere yapmak isteseydim, en küçük ve en büyük noktaları çıkarttıktan sonra her 
+vertice'i tek tek dolaşıp en dışardaki vertice hangisiyse ona göre küremi küçültürdüm. 
+Yani x, y ve z ye ayrı ayrı bakmak yerine ikinci iterasyonda x,y,z üçlüsüne beraber kontroller 
+uygulardım. Fakat bu yöntem O(nVertices) zamanda çalışacağı için sistemi gereksiz yere yoracağını 
+düşündüğümden Poor Fit Bounding Sphere kullanmayı daha uygun gördüm.

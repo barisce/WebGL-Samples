@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+	<head>
+		<title>3D Mesh</title>
+		<style>
+			body{ background-color: grey; }
+			canvas{ background-color: white; }
+		</style>
+		<script src="raf_polyfill.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.4/math.js"></script>
+		<script src="webgl-obj-loader.js"></script>
+
+		<script id="color-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec3 aVertexColor;
+
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+  
+			varying highp vec4 vColor;	
+
+			void main(void) {
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+				vColor = vec4(aVertexColor, 1.0);
+			}
+		</script>
+		
+		<script id="color-fs" type="x-shader/x-fragment">
+			varying highp vec4 vColor;
+			
+			void main(void) {
+               gl_FragColor = vColor;
+			}
+		</script>
+
+		<script id="uniformColor-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+  			
+			void main(void) {
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+
+			}
+		</script>
+		
+		<script id="uniformColor-fs" type="x-shader/x-fragment">
+			precision mediump float;
+			uniform vec4 uColor;
+
+			void main(void) {
+               gl_FragColor = uColor;
+			}
+		</script>
+
+		<script src="Camera.js"></script>
+		<script src="Program.js"></script>
+		<script src="Material.js"></script>
+		<script src="Mesh.js"></script>
+		<script src="SceneObject.js"></script>
+		<script src="UI.js"></script>
+		<script src="Input.js"></script>
+		<script src="Main.js"></script>		
+
+		<script>
+			var gl = null,
+				canvas = null;
+			
+			function initWebGL(){
+				canvas = document.getElementById("my-canvas");  
+				try{
+					gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");					
+				}catch(e){
+				}
+								
+				if(gl){
+					initInput();
+					window.init();
+
+					//just call once to start updating
+					loop();
+					
+				}else{	
+					alert(  "Error: Your browser does not appear to support WebGL.");
+				}
+			}
+
+			function loop(){
+				window.update();
+				//request a new update causes loop
+				requestAnimationFrame(loop);
+			}			
+		</script>
+	</head>
+	<body onload="initWebGL()">
+		<canvas id="my-canvas" width="1200" height="600">
+			Your browser does not support the HTML5 canvas element.
+		</canvas>
+		<div id="ui">
+
+		</div>
+	</body>
+</html>
