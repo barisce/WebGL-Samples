@@ -1,4 +1,4 @@
-function Mesh(vertices, indices){
+function Mesh(vertices, indices) {
     this.indicesCount = indices.length;
 
     this.vertexBuffer = gl.createBuffer();
@@ -9,66 +9,66 @@ function Mesh(vertices, indices){
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
-    this.setColors = function(colors){
+    this.setColors = function (colors) {
         this.colorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
     };
 
-    this.calculateCenterOfMass = function(){
+    this.calculateCenterOfMass = function () {
         var vertexPosSumX = 0;
         var vertexPosSumY = 0;
         var vertexPosSumZ = 0;
 
-        var vLength = vertices.length / 3.0 ;
+        var vLength = vertices.length / 3.0;
 
-        for(var i=0; i<vLength*3 ; i+=3){
+        for (var i = 0; i < vLength * 3; i += 3) {
             vertexPosSumX += vertices[i];
-            vertexPosSumY += vertices[i+1];
-            vertexPosSumZ += vertices[i+2];
+            vertexPosSumY += vertices[i + 1];
+            vertexPosSumZ += vertices[i + 2];
         }
-    
-        return [vertexPosSumX/vLength, vertexPosSumY/vLength, vertexPosSumZ/vLength];
+
+        return [vertexPosSumX / vLength, vertexPosSumY / vLength, vertexPosSumZ / vLength];
     };
 
-    this.getMinimumVertexValues = function(){
+    this.getMinimumVertexValues = function () {
         var vertexPosMinX = 1000000;
         var vertexPosMinY = 1000000;
         var vertexPosMinZ = 1000000;
 
-        var vLength = vertices.length / 3.0 ;
+        var vLength = vertices.length / 3.0;
 
-        for(var i=0; i<vLength*3 ; i+=3){
+        for (var i = 0; i < vLength * 3; i += 3) {
             if (vertices[i] < vertexPosMinX) {
                 vertexPosMinX = vertices[i];
             }
-            if (vertices[i+1] < vertexPosMinY) {
-                vertexPosMinY = vertices[i+1];
+            if (vertices[i + 1] < vertexPosMinY) {
+                vertexPosMinY = vertices[i + 1];
             }
-            if (vertices[i+2] < vertexPosMinZ) {
-                vertexPosMinZ = vertices[i+2];
+            if (vertices[i + 2] < vertexPosMinZ) {
+                vertexPosMinZ = vertices[i + 2];
             }
         }
 
         return [vertexPosMinX, vertexPosMinY, vertexPosMinZ];
     };
 
-    this.getMaximumVertexValues = function(){
+    this.getMaximumVertexValues = function () {
         var vertexPosMaxX = -1000000;
         var vertexPosMaxY = -1000000;
         var vertexPosMaxZ = -1000000;
 
-        var vLength = vertices.length / 3.0 ;
+        var vLength = vertices.length / 3.0;
 
-        for(var i=0; i<vLength*3 ; i+=3){
+        for (var i = 0; i < vLength * 3; i += 3) {
             if (vertices[i] > vertexPosMaxX) {
                 vertexPosMaxX = vertices[i];
             }
-            if (vertices[i+1] > vertexPosMaxY) {
-                vertexPosMaxY = vertices[i+1];
+            if (vertices[i + 1] > vertexPosMaxY) {
+                vertexPosMaxY = vertices[i + 1];
             }
-            if (vertices[i+2] > vertexPosMaxZ) {
-                vertexPosMaxZ = vertices[i+2];
+            if (vertices[i + 2] > vertexPosMaxZ) {
+                vertexPosMaxZ = vertices[i + 2];
             }
         }
 
@@ -76,9 +76,9 @@ function Mesh(vertices, indices){
     };
 }
 
-function createPyramidMesh(){
+function createPyramidMesh() {
 
-    var triangleVertices = [ 
+    var triangleVertices = [
         //front face
         //bottom left to right,  to top
         0.0, 0.0, 0.0,
@@ -87,7 +87,7 @@ function createPyramidMesh(){
         0.5, 1.0, 0.0,
         1.5, 1.0, 0.0,
         1.0, 2.0, 0.0,
-        
+
         //rear face
         0.0, 0.0, -2.0,
         1.0, 0.0, -2.0,
@@ -97,7 +97,7 @@ function createPyramidMesh(){
         1.0, 2.0, -2.0
     ];
 
-    var triangleVerticeColors = [ 
+    var triangleVerticeColors = [
         //front face	
          0.0, 0.0, 1.0,
          1.0, 1.0, 1.0,
@@ -105,7 +105,7 @@ function createPyramidMesh(){
          0.0, 0.0, 1.0,
          0.0, 0.0, 1.0,
          1.0, 1.0, 1.0,
-    
+
         //rear face
          0.0, 1.0, 1.0,
          1.0, 1.0, 1.0,
@@ -115,25 +115,25 @@ function createPyramidMesh(){
          1.0, 1.0, 1.0
     ];
 
-    var triangleVertexIndices = [ 
+    var triangleVertexIndices = [
         //front face
         0,1,3,
         1,3,4,
         1,2,4,
         3,4,5,
-        
+
         //rear face
         6,7,9,
         7,9,10,
         7,8,10,
         9,10,11,
-        
+
         //left side
         0,3,6,
         3,6,9,
         3,5,9,
         5,9,11,
-        
+
         //right side
         2,4,8,
         4,8,10,
@@ -150,8 +150,8 @@ function createPyramidMesh(){
     return pyramidMesh;
 }
 
-function createBoxMesh(){
-    var vertices = [        
+function createBoxMesh() {
+    var vertices = [
         //bottomFace
         -0.5,-0.5,-0.5,
         0.5,-0.5,-0.5,
@@ -205,12 +205,12 @@ function createBoxMesh(){
         -0.5,0.5,0.5,
         -0.5,-0.5,-0.5,
         -0.5,0.5,0.5,
-        -0.5,0.5,-0.5           
+        -0.5,0.5,-0.5
     ];
 
     var indices = [];
-    
-    for(var i=0; i<vertices.length/3; i++){
+
+    for (var i = 0; i < vertices.length / 3; i++) {
         indices[i] = i;
     }
 
@@ -218,14 +218,14 @@ function createBoxMesh(){
     return boxMesh;
 }
 
-function createSphereMesh(){
+function createSphereMesh() {
     var vertices = [];
     for (var z = 0; z <= 360; z += 1) { //1, 5, 15 number of line draw
         vertices.push(130 * Math.cos(z * (Math.PI / 180)), 130 * Math.sin(z * (Math.PI / 180)), 0);
     }
 
     var indices = [];
-    for(var i=0; i<vertices.length/3; i++){
+    for (var i = 0; i < vertices.length / 3; i++) {
         indices[i] = i;
     }
 
@@ -233,25 +233,25 @@ function createSphereMesh(){
     return sphereMesh;
 }
 
-function loadObjMesh(objFileUrl, callback){
-    loadObjMeshes([objFileUrl], function(meshes){
+function loadObjMesh(objFileUrl, callback) {
+    loadObjMeshes([objFileUrl], function (meshes) {
         callback(meshes[0]);
     });
 }
 
-function loadObjMeshes(objFileUrls, callback){
+function loadObjMeshes(objFileUrls, callback) {
     var objInfos = {};
-    for(var i=0; i<objFileUrls.length; i++){
+    for (var i = 0; i < objFileUrls.length; i++) {
         objInfos[i] = objFileUrls[i];
     }
-    OBJ.downloadMeshes(objInfos, function(objs){
+    OBJ.downloadMeshes(objInfos, function (objs) {
         var meshes = [];
 
-        for(var key in objs){
+        for (var key in objs) {
             var obj = objs[key];
 
             var mesh = new Mesh(obj.vertices, obj.indices);
-                        
+
             meshes[parseInt(key)] = mesh;
         }
 
