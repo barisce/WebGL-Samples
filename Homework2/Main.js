@@ -8,17 +8,18 @@ window.init = function () {
     clicked = false;
     rotationSpeed = 0.6;
 
-    var program1 = new Program('color-vs', 'color-fs');
-    program1.setVertexPositionAttributeName("aVertexPosition");
-    program1.setVertexColorAttributeName("aVertexColor");
-
-    var material1 = new Material(program1);
-    var mesh1 = createSphereMesh();
-    var pyramid = new SceneObject(mesh1, material1);
-    pyramid.localPosition = [0, 0, 0];
+    // var program1 = new Program('color-vs', 'color-fs');
+    // program1.setVertexPositionAttributeName("aVertexPosition");
+    // program1.setVertexColorAttributeName("aVertexColor");
+    //
+    // var material1 = new Material(program1);
+    // var mesh1 = createSphereMesh();
+    // var pyramid = new SceneObject(mesh1, material1);
+    // pyramid.localPosition = [0, 0, 0];
 
     var program2 = new Program('uniformColor-vs', 'uniformColor-fs');
 
+    // Bird
     var material2 = new Material(program2);
     material2.setCustomUniformColor("uColor", [1, 0, 0, 1]);
 
@@ -30,6 +31,7 @@ window.init = function () {
         window.bird.scale = [0.05, 0.05, 0.05];
     });
 
+    // Horse
     var material3 = new Material(program2);
     material3.setCustomUniformColor("uColor", [0, 0, 1, 1]);
 
@@ -40,6 +42,7 @@ window.init = function () {
         window.horse.scale = [0.1, 0.1, 0.1];
     });
 
+    // Fish
     var material4 = new Material(program2);
     material4.setCustomUniformColor("uColor", [.5, 0, 0, 1]);
 
@@ -50,6 +53,7 @@ window.init = function () {
         window.fish.scale = [0.1, 0.1, 0.1];
     });
 
+    // Frog
     var material5 = new Material(program2);
     material5.setCustomUniformColor("uColor", [0, .5, 0, 1]);
 
@@ -60,6 +64,7 @@ window.init = function () {
         window.frog.scale = [0.15, 0.15, 0.15];
     });
 
+    // Bear
     var material6 = new Material(program2);
     material6.setCustomUniformColor("uColor", [0, 1, 0, 1]);
 
@@ -70,6 +75,7 @@ window.init = function () {
         window.bear.scale = [0.8, 0.8, 0.8];
     });
 
+    // Sliders for objects. For test purposes only
     var slider1 = createSlider("Rotate Duck : ", 0, 0, 360, function () {
         window.bird.localEulerAngles = [-90 - this.value, this.value - 180, 0];
     });
@@ -90,10 +96,12 @@ window.init = function () {
         window.bear.localEulerAngles = [this.value, this.value, 0];
     });
 
+    // Reset camera button
     var button1 = createButton("Reset Camera", function () {
         window.mainCamera.position = [0, 2, -10];
     });
 
+    //Chooses a word after some time. Selected word must be picked to rotate
     timedWordSelect();
 };
 

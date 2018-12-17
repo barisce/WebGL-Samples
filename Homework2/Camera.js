@@ -40,12 +40,14 @@ function Camera() {
         inf[3] = 1.0;
 
         csDirec = [inf[0] / this.projectionMatrix[0], inf[1] / this.projectionMatrix[5], -1];
+        //Start point
         wsStart = [iViewMatrix[3],iViewMatrix[7],iViewMatrix[11]];
+        //Ray Direction
         wsDirec = [csDirec[0]*iViewMatrix[0] + csDirec[1]*iViewMatrix[1] + csDirec[2]*iViewMatrix[2],
                    csDirec[0]*iViewMatrix[4] + csDirec[1]*iViewMatrix[5] + csDirec[2]*iViewMatrix[6],
                    csDirec[0]*iViewMatrix[8] + csDirec[1]*iViewMatrix[9] + csDirec[2]*iViewMatrix[10]];
 
-        //RayCasting
+        //return RayCasting info
         return [csDirec,wsStart,wsDirec];
     };
 

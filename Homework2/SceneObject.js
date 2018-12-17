@@ -32,6 +32,7 @@ function SceneObject(mesh, material) {
         mat4.rotateY(this.modelMatrix, this.modelMatrix, this.localEulerAngles[1] * (Math.PI / 180));
         mat4.rotateX(this.modelMatrix, this.modelMatrix, this.localEulerAngles[0] * (Math.PI / 180));
         mat4.scale(this.modelMatrix, this.modelMatrix, this.scale);
+        // translate by its centerOfMass so that it rotates around center of mass
         mat4.translate(this.modelMatrix, this.modelMatrix, this.centerInversePosition);
 
         return this.modelMatrix;

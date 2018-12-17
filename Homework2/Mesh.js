@@ -31,6 +31,7 @@ function Mesh(vertices, indices) {
         return [vertexPosSumX / vLength, vertexPosSumY / vLength, vertexPosSumZ / vLength];
     };
 
+    //gets the minimum vertex values so that we can create a bounding box or sphere
     this.getMinimumVertexValues = function () {
         var vertexPosMinX = 1000000;
         var vertexPosMinY = 1000000;
@@ -53,6 +54,7 @@ function Mesh(vertices, indices) {
         return [vertexPosMinX, vertexPosMinY, vertexPosMinZ];
     };
 
+    //gets the maximum vertex values so that we can create a bounding box or sphere
     this.getMaximumVertexValues = function () {
         var vertexPosMaxX = -1000000;
         var vertexPosMaxY = -1000000;
@@ -216,21 +218,6 @@ function createBoxMesh() {
 
     var boxMesh = new Mesh(vertices, indices);
     return boxMesh;
-}
-
-function createSphereMesh() {
-    var vertices = [];
-    for (var z = 0; z <= 360; z += 1) { //1, 5, 15 number of line draw
-        vertices.push(130 * Math.cos(z * (Math.PI / 180)), 130 * Math.sin(z * (Math.PI / 180)), 0);
-    }
-
-    var indices = [];
-    for (var i = 0; i < vertices.length / 3; i++) {
-        indices[i] = i;
-    }
-
-    var sphereMesh = new Mesh(vertices, indices);
-    return sphereMesh;
 }
 
 function loadObjMesh(objFileUrl, callback) {
