@@ -26,11 +26,11 @@ function Program(vertexShaderElementId, fragmentShaderElementId, projectionMatri
     
         this.setVertexPositionAttributeName = function(vertexPositionAttributeName){
             this.vertexPositionAttribute = gl.getAttribLocation(this.glProgram, vertexPositionAttributeName);
-        }
+        };
         
         this.setVertexColorAttributeName = function(vertexColorAttributeName){
             this.vertexColorAttribute = gl.getAttribLocation(this.glProgram, vertexColorAttributeName);
-        }
+        };
     
         this.prepareRender = function(modelMatrix, camera){
             gl.useProgram(this.glProgram);

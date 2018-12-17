@@ -90,8 +90,8 @@ window.init = function () {
         window.bear.localEulerAngles = [this.value, this.value, 0];
     });
 
-    var button1 = createButton("Test", function () {
-        alert("Deneme");
+    var button1 = createButton("Reset Camera", function () {
+        window.mainCamera.position = [0, 2, -10];
     });
 
     timedWordSelect();
@@ -99,6 +99,7 @@ window.init = function () {
 
 window.update = function () {
     window.mainCamera.update();
+    positionCameraWihtKeyboarInput();
 
     if (clicked) {
         window.bird.localEulerAngles =  [window.bird.localEulerAngles[0]  - rotationSpeed, window.bird.localEulerAngles[1]  - rotationSpeed, window.bird.localEulerAngles[2] ];

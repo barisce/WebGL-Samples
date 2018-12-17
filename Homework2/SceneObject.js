@@ -9,6 +9,7 @@ function SceneObject(mesh, material) {
     this.material = material;
 
     this.centerPosition = mesh.calculateCenterOfMass();
+    this.centerBoundingPosition = math.divide(math.add(mesh.getMinimumVertexValues(), mesh.getMaximumVertexValues()), 2);
     this.centerInversePosition = [-1 * this.centerPosition[0], -1 * this.centerPosition[1], -1 * this.centerPosition[2]];
 
     if (!window.sceneObjects) {

@@ -19,6 +19,36 @@ function Camera() {
         this.viewMatrix = this.calculateViewMatrix(this.lookAt, this.position, window.globalUp);
     };
 
+    // this function casts a ray from given coordinates of the screen to world space and returns the ray
+    this.raycast = function (mousePosX, mousePosY, mousePosZ) {
+        // mousePosZ is either 0 (near plane), 1 (far plane) or somewhere in between.
+        mousePosX = parseFloat(mousePosX);
+        mousePosY = parseFloat(mousePosY);
+        mousePosZ = parseFloat(mousePosZ);
+
+        var inf = [];
+        // Shallow copying matrices without references so that our view doesn't effect from it.
+        var iViewMatrix = Object.assign({}, this.viewMatrix);
+
+        // inverse view matrix
+        mat4.invert(iViewMatrix, iViewMatrix);
+
+        // Transformation of normalized coordinates between -1 and 1
+        inf[0] = (mousePosX / canvas.width) * 2.0 - 1.0;
+        inf[1] = (mousePosY / canvas.height) * 2.0 - 1.0;
+        inf[2] = 2.0 * mousePosZ - 1.0;
+        inf[3] = 1.0;
+
+        csDirec = [inf[0] / this.projectionMatrix[0], inf[1] / this.projectionMatrix[5], -1];
+        wsStart = [iViewMatrix[3],iViewMatrix[7],iViewMatrix[11]];
+        wsDirec = [csDirec[0]*iViewMatrix[0] + csDirec[1]*iViewMatrix[1] + csDirec[2]*iViewMatrix[2],
+                   csDirec[0]*iViewMatrix[4] + csDirec[1]*iViewMatrix[5] + csDirec[2]*iViewMatrix[6],
+                   csDirec[0]*iViewMatrix[8] + csDirec[1]*iViewMatrix[9] + csDirec[2]*iViewMatrix[10]];
+
+        //RayCasting
+        return [csDirec,wsStart,wsDirec];
+    };
+
     this.clearScene = function () {
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -49,3 +79,17 @@ function Camera() {
         return viewMatrix;
     }
 }
+
+// function that multiplies matrix with Vec4
+mat4.multiplyVec4 = function(mat, vec, dest) {
+    if(!dest) { dest = vec }
+
+    var x = vec[0], y = vec[1], z = vec[2], w = vec[3];
+
+    dest[0] = mat[0]*x + mat[4]*y + mat[8]*z + mat[12]*w;
+    dest[1] = mat[1]*x + mat[5]*y + mat[9]*z + mat[13]*w;
+    dest[2] = mat[2]*x + mat[6]*y + mat[10]*z + mat[14]*w;
+    dest[3] = mat[3]*x + mat[7]*y + mat[11]*z + mat[15]*w;
+
+    return dest;
+};
