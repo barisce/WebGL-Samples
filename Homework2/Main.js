@@ -8,14 +8,14 @@ window.init = function () {
     clicked = false;
     rotationSpeed = 0.6;
 
-    // var program1 = new Program('color-vs', 'color-fs');
-    // program1.setVertexPositionAttributeName("aVertexPosition");
-    // program1.setVertexColorAttributeName("aVertexColor");
-    //
-    // var material1 = new Material(program1);
-    // var mesh1 = createSphereMesh();
-    // var pyramid = new SceneObject(mesh1, material1);
-    // pyramid.localPosition = [0, 0, 0];
+    var program1 = new Program('color-vs', 'color-fs');
+    program1.setVertexPositionAttributeName("aVertexPosition");
+    program1.setVertexColorAttributeName("aVertexColor");
+
+    var material1 = new Material(program1);
+    var mesh1 = createBoxMesh();
+    var pyramid = new SceneObject(mesh1, material1);
+    pyramid.localPosition = [0, 20, 0];
 
     var program2 = new Program('uniformColor-vs', 'uniformColor-fs');
 
