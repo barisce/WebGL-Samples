@@ -11,6 +11,10 @@ function initInput() {
     leftPressed = false;
     upPressed = false;
     downPressed = false;
+    wPressed = false;
+    sPressed = false;
+    aPressed = false;
+    dPressed = false;
 
     canvas.addEventListener('mousemove', function (evt) {
         window.mousePosition = getMousePos(canvas, evt);
@@ -18,7 +22,7 @@ function initInput() {
 
     canvas.addEventListener('click', function (evt) {
         window.mousePosition = getMousePos(canvas, evt);
-        // document.getElementById("lightPos").innerHTML = window.light.position;
+        document.getElementById("lightPos").innerHTML = window.light.position;
     }, false);
 
     //adding eventlisteners for key pressed and released
@@ -39,6 +43,18 @@ function initInput() {
         else if (event.keyCode == 38) {
             upPressed = true;
         }
+        if (event.keyCode == 87) {
+            wPressed = true;
+        }
+        else if (event.keyCode == 83) {
+            sPressed = true;
+        }
+        if (event.keyCode == 65) {
+            aPressed = true;
+        }
+        else if (event.keyCode == 68) {
+            dPressed = true;
+        }
     }
 
     //key released event
@@ -55,25 +71,45 @@ function initInput() {
         else if (event.keyCode == 38) {
             upPressed = false;
         }
+        if (event.keyCode == 87) {
+            wPressed = false;
+        }
+        else if (event.keyCode == 83) {
+            sPressed = false;
+        }
+        if (event.keyCode == 65) {
+            aPressed = false;
+        }
+        else if (event.keyCode == 68) {
+            dPressed = false;
+        }
     }
 }
 
 //Move camera at update function
 function positionLightWihtKeyboarInput() {
     if (rightPressed) {
-        //window.light.position[0] += 0.1;
-        window.mainCamera.position[0] += 0.1;
+        window.light.position[0] -= 0.1;
     }
     else if (leftPressed) {
-        //window.light.position[0] -= 0.1;
-        window.mainCamera.position[0] -= 0.1;
+        window.light.position[0] += 0.1;
     }
     else if (downPressed) {
-        //window.light.position[2] += 0.1;
-        window.mainCamera.position[2] += 0.1;
+        window.light.position[2] -= 0.1;
     }
     else if (upPressed) {
-        //window.light.position[2] -= 0.1;
+        window.light.position[2] += 0.1;
+    }
+    if (wPressed) {
+        window.mainCamera.position[2] += 0.1;
+    }
+    else if (sPressed) {
         window.mainCamera.position[2] -= 0.1;
+    }
+    else if (aPressed) {
+        window.mainCamera.position[0] += 0.1;
+    }
+    else if (dPressed) {
+        window.mainCamera.position[0] -= 0.1;
     }
 }

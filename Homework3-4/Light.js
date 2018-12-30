@@ -26,8 +26,8 @@ function Light(lightType = LightType.Directional) {
             program.setUniform3fv("uInverseLightDirection", direction3);
         }
         else if (this.type == LightType.Point || this.type == LightType.Spot) {
-            var pointlightPosition = [-this.position[0], -this.position[1], -this.position[2], 1.0];
-            program.setUniform4fv("uLightPosition", [pointlightPosition[0], pointlightPosition[1], pointlightPosition[2], 1.0]);
+            var pointlightPosition = [-this.position[0], -this.position[1], -this.position[2]];
+            program.setUniform3fv("uLightPosition", pointlightPosition);
         }
     }
 }

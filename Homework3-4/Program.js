@@ -25,6 +25,8 @@ function Program(vertexShaderElementId, fragmentShaderElementId, projectionMatri
     this.projectionMatrixUniform = gl.getUniformLocation(this.glProgram, projectionMatrixUniformName);
     this.modelViewMatrixUniform = gl.getUniformLocation(this.glProgram, modelViewMatrixUniformName);
 
+    this.ModelMatrixUniform = gl.getUniformLocation(this.glProgram, "uMMatrix");
+
     this.setVertexPositionAttributeName = function (vertexPositionAttributeName) {
         this.vertexPositionAttribute = gl.getAttribLocation(this.glProgram, vertexPositionAttributeName);
     };
@@ -63,7 +65,6 @@ function Program(vertexShaderElementId, fragmentShaderElementId, projectionMatri
 
     this.setTextureUniformName = function (textureUniformName) {
         this.textureUniform = gl.getUniformLocation(this.glProgram, textureUniformName);
-        ;
     };
 
     this.getUniformLocation = function (name) {
@@ -89,6 +90,7 @@ function Program(vertexShaderElementId, fragmentShaderElementId, projectionMatri
         var mvMatrix = mat4.create();
         mvMatrix = mat4.multiply(mvMatrix, camera.viewMatrix, modelMatrix);
         gl.uniformMatrix4fv(this.modelViewMatrixUniform, false, mvMatrix);
+        gl.uniformMatrix4fv(this.ModelMatrixUniform, false, modelMatrix);
         if (gl.getUniformLocation(this.glProgram, "uMVITMatrix") != null) {
             var mvitMatrix = mat4.create();
             mat4.invert(mvitMatrix, mvMatrix);
