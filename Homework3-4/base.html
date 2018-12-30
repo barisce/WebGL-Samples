@@ -1,18 +1,23 @@
 <!-- Baris Celik - N18136522 -->
 <!doctype html>
 <html>
-	<head>
-		<title>Baris Celik</title>
-		<style>
-			body{ background-color: grey; }
-			canvas{ background-color: white; }
-		</style>
-		<script src="raf_polyfill.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.4/math.js"></script>
-		<script src="webgl-obj-loader.js"></script>
+<head>
+    <title>Baris Celik</title>
+    <style>
+        body {
+            background-color: grey;
+        }
 
-		<script id="directionalLight-vs" type="x-shader/x-vertex">
+        canvas {
+            background-color: white;
+        }
+    </style>
+    <script src="raf_polyfill.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.4/math.js"></script>
+    <script src="webgl-obj-loader.js"></script>
+
+    <script id="directionalLight-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec3 aVertexNormal;	
 			
@@ -50,9 +55,9 @@
 
 				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
 			}
-		</script>
+    </script>
 
-		<script id="directionalLight-fs" type="x-shader/x-fragment">
+    <script id="directionalLight-fs" type="x-shader/x-fragment">
 			varying highp vec4 vColor;
 
 			void main(void) {
@@ -61,7 +66,7 @@
 
 		</script>
 
-		<script id="directionalLight2-vs" type="x-shader/x-vertex">
+    <script id="directionalLight2-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec3 aVertexNormal;	
 			
@@ -84,10 +89,9 @@
 				
 			}
 
-			
-		</script>
+    </script>
 
-		<script id="directionalLight2-fs" type="x-shader/x-fragment">
+    <script id="directionalLight2-fs" type="x-shader/x-fragment">
 		precision mediump float;
 		
 		uniform  float uShininess;
@@ -128,9 +132,9 @@
 			gl_FragColor = fColor;
 
 		}
-		</script>
+    </script>
 
-		<script id="pointLight-vs" type="x-shader/x-vertex">
+    <script id="pointLight-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec3 aVertexNormal;
 
@@ -152,12 +156,12 @@
 			void main(void){
 				vec3 posInCameraSpace = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz;
 
-				vec3 l = normalize( uLightPosition.xyz - posInCameraSpace );
+				vec3 l = normalize( uLightPosition.xyz - posInCameraSpace.xyz );
 				vec3 n = normalize((uMMatrix * vec4(aVertexNormal, 0.0)).xyz);
 
 				// if attenuation stays 1.0 then its directional light and goes on forever
 				float attenuation = 1.0;
-				float distanceToLight = length(uLightPosition.xyz - posInCameraSpace);
+				float distanceToLight = length(uLightPosition.xyz - posInCameraSpace.xyz);
 				// as distance increases, decrease the light that it receives
 				attenuation = 1.0 / (1.0 + uAttenuation * (pow(distanceToLight, 2.0)));
 
@@ -183,20 +187,19 @@
 
 				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
 			}
+    </script>
 
-		</script>
-
-		<script id="pointLight-fs" type="x-shader/x-fragment">
+    <script id="pointLight-fs" type="x-shader/x-fragment">
 			varying highp vec4 vColor;
 
 			void main(void) {
 				gl_FragColor = vColor;
 			}
 
-		</script>
+    </script>
 
 
-		<script id="pointLight2-vs" type="x-shader/x-vertex">
+    <script id="pointLight2-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec3 aVertexNormal;
 
@@ -210,16 +213,15 @@
 			void main(void){
 				vec3 posInCameraSpace = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz;
 
-				//n = (uMVITMatrix * vec4(aVertexNormal, 0.0)).xyz;
 				n = (uMMatrix * vec4(aVertexNormal, 0.0)).xyz;
 
 				v = -posInCameraSpace;
 
 				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
 			}
-		</script>
+    </script>
 
-		<script id="pointLight2-fs" type="x-shader/x-fragment">
+    <script id="pointLight2-fs" type="x-shader/x-fragment">
 			precision mediump float;
 
 			uniform  float uShininess;
@@ -238,11 +240,11 @@
 
 				vec3 n2 = normalize(n);
 				vec3 v2 = normalize(v);
-				vec3 l = normalize(uLightPosition.xyz - (-v.xyz));
+				vec3 l = normalize(uLightPosition.xyz + v2.xyz);
 
 				// if attenuation stays 1.0 then its directional light and goes on forever
 				float attenuation = 1.0;
-				float distanceToLight = length(uLightPosition.xyz - (-v.xyz));
+				float distanceToLight = length(uLightPosition.xyz + v2.xyz);
 				// as distance increases, decrease the light that it receives
 				attenuation = 1.0 / (1.0 + uAttenuation * (pow(distanceToLight, 2.0)));
 
@@ -267,62 +269,61 @@
 				}
 				fColor.a = 1.0;
 
-				//multiply light value with color
 				gl_FragColor = fColor;
 			}
 
-		</script>
+    </script>
 
-		<script src="Camera.js"></script>
-		<script src="Texture.js"></script>
-		<script src="Program.js"></script>
-		<script src="Light.js"></script>
-		<script src="Material.js"></script>
-		<script src="Mesh.js"></script>
-		<script src="SceneObject.js"></script>
-		<script src="UI.js"></script>
-		<script src="Input.js"></script>
-		<script src="Main.js"></script>		
+    <script src="Camera.js"></script>
+    <script src="Texture.js"></script>
+    <script src="Program.js"></script>
+    <script src="Light.js"></script>
+    <script src="Material.js"></script>
+    <script src="Mesh.js"></script>
+    <script src="SceneObject.js"></script>
+    <script src="UI.js"></script>
+    <script src="Input.js"></script>
+    <script src="Main.js"></script>
 
-		<script>
-			var gl = null,
-				canvas = null;
-			
-			function initWebGL(){
-				canvas = document.getElementById("my-canvas");  
-				try{
-					gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");					
-				}catch(e){
-				}
-								
-				if(gl){
-					initInput();
-					window.init();
+    <script>
+        var gl = null,
+            canvas = null;
 
-					//just call once to start updating
-					loop();
-					
-				}else{	
-					alert(  "Error: Your browser does not appear to support WebGL.");
-				}
-			}
+        function initWebGL() {
+            canvas = document.getElementById("my-canvas");
+            try {
+                gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+            } catch (e) {
+            }
 
-			function loop(){
-				window.update();
+            if (gl) {
+                Input.init();
+                window.init();
 
-				//setTimeout(loop, 0);
-				//request a new update causes loop
-				requestAnimationFrame(loop, canvas);
-			}			
-		</script>
-	</head>
-	<body onload="initWebGL()">
-		<canvas id="my-canvas" width="800" height="600">
-			Your browser does not support the HTML5 canvas element.
-		</canvas>
-		<div id="lightPos"><strong>---</strong></div>
-		<div id="ui">
+                //just call once to start updating
+                loop();
 
-		</div>
-	</body>
+            } else {
+                alert("Error: Your browser does not appear to support WebGL.");
+            }
+        }
+
+        function loop() {
+            window.mainCamera.update();
+            window.update();
+            Input.update();
+
+            //request a new update causes loop
+            requestAnimationFrame(loop, canvas);
+        }
+    </script>
+</head>
+<body onload="initWebGL()">
+<canvas id="my-canvas" width="800" height="600">
+    Your browser does not support the HTML5 canvas element.
+</canvas>
+<div id="ui">
+
+</div>
+</body>
 </html>

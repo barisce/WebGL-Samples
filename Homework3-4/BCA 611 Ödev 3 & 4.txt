@@ -31,4 +31,5 @@ Directional Light tan farklı olarak ışığın yönünü değil ışığın po
 CameraSpace pozisyonu ile ışığın pozisyonunun normali ışığımın normali, uzunluğu ise bana ışığın
 sönüklüğünü veriyor.
 
-Yön tuşları ile kamerayı kontrol edebilirsiniz.
+Canvasa tıklayıp W A S D tuşları ile kamerayı kontrol edebilirsiniz. Sliderlar ile ışığın
+pozisyonunu kontrol edebilirsiniz.

@@ -1,4 +1,5 @@
 window.init = function () {
+    Input.enableCursorLock();
     var camera = new Camera();
     camera.position = [0, 0, 10];
     camera.lookAt = [0.0, 0.0, 0.0];
@@ -33,12 +34,20 @@ window.init = function () {
         window.bird.scale = [0.1, 0.1, 0.1];
     });
 
+    loadObjMesh("https://zumrakavafoglu.github.io/files/bca611-cg/models/frog.obj", function (mesh) {
+        window.frog = new SceneObject(mesh, material);
+        window.frog.localPosition = [0, 4, 0];
+        window.frog.localEulerAngles = [-90, 180, 0];
+        window.frog.scale = [0.15, 0.15, 0.15];
+    });
+
     new Light(LightType.Point);
 
 
     var slider1 = createSlider("Change Angle Y : ", 0, 0, 360, function () {
         window.sphere.localEulerAngles = [0, this.value, 0];
         window.bird.localEulerAngles = [-90, 0 - this.value, 0];
+        window.frog.localEulerAngles = [-90, 180 - this.value, 0];
     });
 
     var slider2 = createSlider("X : ", 0, -10, 10, function () {
@@ -57,19 +66,20 @@ window.init = function () {
         material.shininess = this.value;
     });
 
-    var attenuationSlider = createSlider("Attenuation : ", window.light.attenuation, 0, 0.1, function () {
+    var attenuationSlider = createSlider("Attenuation : ", window.light.attenuation, 0, 1, function () {
         window.light.attenuation = this.value;
     });
 
     var button1 = createButton("Reset", function () {
         window.light.position = [0, 0, 0];
         window.mainCamera.position = [0, 0, 10];
+        camera.lookAt = [0.0, 0.0, 0.0];
     });
 
 };
 
 window.update = function () {
     window.mainCamera.update();
-    positionLightWihtKeyboarInput();
+    window.mainCamera.setFreeMove(true);
     drawSceneObjects();
 };

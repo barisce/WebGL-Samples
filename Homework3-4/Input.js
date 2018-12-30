@@ -1,3 +1,5 @@
+var Input = {};
+
 function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
     return {
@@ -6,110 +8,94 @@ function getMousePos(canvas, evt) {
     };
 }
 
-function initInput() {
-    rightPressed = false;
-    leftPressed = false;
-    upPressed = false;
-    downPressed = false;
-    wPressed = false;
-    sPressed = false;
-    aPressed = false;
-    dPressed = false;
+Input.mouseDelta = {x: 0, y: 0};
+Input.mousePosition = {x: 0, y: 0};
+var lastMousePosition = {x: 0, y: 0};
+var isMousePositionInitialized = false;
 
-    canvas.addEventListener('mousemove', function (evt) {
-        window.mousePosition = getMousePos(canvas, evt);
+Input.enableCursorLock = function () {
+    canvas.onclick = function () {
+        canvas.requestPointerLock();
+    }
+};
+
+Input.init = function () {
+    document.addEventListener('mousemove', function (evt) {
+        if (Input.isLocked) {
+            Input.mouseDelta.x = evt.movementX;
+            Input.mouseDelta.y = evt.movementY;
+        } else {
+            Input.mousePosition = getMousePos(canvas, evt);
+
+            if (isMousePositionInitialized) {
+                Input.mouseDelta.x = Input.mousePosition.x - lastMousePosition.x;
+                Input.mouseDelta.y = Input.mousePosition.y - lastMousePosition.y;
+            }
+
+            lastMousePosition.x = Input.mousePosition.x;
+            lastMousePosition.y = Input.mousePosition.y;
+
+            isMousePositionInitialized = true;
+        }
     }, false);
 
     canvas.addEventListener('click', function (evt) {
         window.mousePosition = getMousePos(canvas, evt);
-        document.getElementById("lightPos").innerHTML = window.light.position;
+        if (window.mouseClicked)
+            window.mouseClicked();
     }, false);
 
-    //adding eventlisteners for key pressed and released
-    document.addEventListener('keydown', keyDownHandler, false);
-    document.addEventListener('keyup', keyUpHandler, false);
+    document.onkeydown = handleKeyDown;
+    document.onkeyup = handleKeyUp;
+};
 
-    //key pressed event
-    function keyDownHandler(event) {
-        if (event.keyCode == 39) {
-            rightPressed = true;
-        }
-        else if (event.keyCode == 37) {
-            leftPressed = true;
-        }
-        if (event.keyCode == 40) {
-            downPressed = true;
-        }
-        else if (event.keyCode == 38) {
-            upPressed = true;
-        }
-        if (event.keyCode == 87) {
-            wPressed = true;
-        }
-        else if (event.keyCode == 83) {
-            sPressed = true;
-        }
-        if (event.keyCode == 65) {
-            aPressed = true;
-        }
-        else if (event.keyCode == 68) {
-            dPressed = true;
-        }
+Input.update = function () {
+    if (document.pointerLockElement === canvas) {
+        Input.isLocked = true;
+    } else {
+        Input.isLocked = false;
     }
 
-    //key released event
-    function keyUpHandler(event) {
-        if (event.keyCode == 39) {
-            rightPressed = false;
-        }
-        else if (event.keyCode == 37) {
-            leftPressed = false;
-        }
-        if (event.keyCode == 40) {
-            downPressed = false;
-        }
-        else if (event.keyCode == 38) {
-            upPressed = false;
-        }
-        if (event.keyCode == 87) {
-            wPressed = false;
-        }
-        else if (event.keyCode == 83) {
-            sPressed = false;
-        }
-        if (event.keyCode == 65) {
-            aPressed = false;
-        }
-        else if (event.keyCode == 68) {
-            dPressed = false;
-        }
-    }
+    Input.mouseDelta.x = 0;
+    Input.mouseDelta.y = 0;
+};
+
+Input.isKeyDown = function (keyCode) {
+    return pressedKeys[keyCode];
+};
+
+var pressedKeys = {};
+
+function handleKeyDown(event) {
+    checkModifierKeys(event);
+
+    pressedKeys[event.keyCode] = true;
 }
 
-//Move camera at update function
-function positionLightWihtKeyboarInput() {
-    if (rightPressed) {
-        window.light.position[0] -= 0.1;
-    }
-    else if (leftPressed) {
-        window.light.position[0] += 0.1;
-    }
-    else if (downPressed) {
-        window.light.position[2] -= 0.1;
-    }
-    else if (upPressed) {
-        window.light.position[2] += 0.1;
-    }
-    if (wPressed) {
-        window.mainCamera.position[2] += 0.1;
-    }
-    else if (sPressed) {
-        window.mainCamera.position[2] -= 0.1;
-    }
-    else if (aPressed) {
-        window.mainCamera.position[0] += 0.1;
-    }
-    else if (dPressed) {
-        window.mainCamera.position[0] -= 0.1;
-    }
+function handleKeyUp(event) {
+    checkModifierKeys(event);
+
+    pressedKeys[event.keyCode] = false;
 }
+
+function checkModifierKeys(event) {
+    if (event.shiftKey)
+        pressedKeys[Keys.Shift] = true;
+    else
+        pressedKeys[Keys.Shift] = false;
+}
+
+// http://keycode.info/
+window.Keys = {
+    Shift: -1,
+    RightArrow: 39,
+    LeftArrow: 37,
+    UpArrow: 38,
+    DownArrow: 40,
+    Escape: 27,
+    Space: 32,
+    W: 87,
+    A: 65,
+    S: 83,
+    D: 68
+};
