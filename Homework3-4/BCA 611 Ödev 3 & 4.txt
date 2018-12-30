@@ -1,0 +1,34 @@
+BCA 611 Ödev 3 & 4
+
+Point Light için kullanılan Phong modeli:
+Sahnemizde emissive bir cisim yani kendinden ışık yayan bir cisim olmadığı için Phong'un
+4 ana modeli olan ambient, diffuse, specular ve emissive den, emissive dışındaki modelleri
+implement ettim.
+
+ambient a hiçbir koşulda dokunmadım ve her şekilde ışığa eklenmesini sağladım. Yani ortamda
+ışık olmasa bile cismi seçebilmemiz adına ufak bir ambiyans ışığı ekledim.
+
+diffuse için javascriptten yolladığım katsayıyı n dot l nin sıfırdan büyük için olan değerini
+alıp 0.8 ile çarptım. Bu değerler sizin de derste anlattığınız gibi gerçeğe yakınlık için 
+çarpılıyor.
+
+specular için r ve v nin dot product'ını alıp parlaklık katsayısıyla üstelini specular 
+katsayımla çarpıp 0.4 ile çarptım.
+r dot v nin sıfırdan büyük olan değerlerine baktığım için sadece sıfırdan büyük olduğu zamanlar
+color'a ekledim.
+
+diffuse ve specular ışığa olan uzaklıktan etkilendiği için attenuation diye bir değer tanımladım.
+Bu değer uzaklığa göre azalıyor ve ışığın zayıflamasını sağlıyor.
+1/ ( 1 + zayıflamaKatsayısı * ışığaUzaklığınKaresi )  (1)
+Formül (1) deki hesaplamaları uygulayınca ulaştığım değerden emin olamadığım için değişken
+şeklinde uyarladım ve bunu bir slider a atadım. Nasıl etki ettiğini görmek isterseniz slider ile
+oynayabilirsiniz.
+
+Attenuation sliderıyla oynarken en sola çekerseniz uzaklığı elimine edersiniz. En sağa çekerseniz
+ışığın radius'u çok düşük olur.
+
+Directional Light tan farklı olarak ışığın yönünü değil ışığın pozisyonunu iletiyorum.
+CameraSpace pozisyonu ile ışığın pozisyonunun normali ışığımın normali, uzunluğu ise bana ışığın
+sönüklüğünü veriyor.
+
+Yön tuşları ile kamerayı kontrol edebilirsiniz.
