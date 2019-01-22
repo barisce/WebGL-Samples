@@ -1,17 +1,22 @@
 <!doctype html>
 <html>
-	<head>
-		<title>3D Mesh</title>
-		<style>
-			body{ background-color: grey; }
-			canvas{ background-color: white; }
-		</style>
-		<script src="raf_polyfill.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.4/math.js"></script>
-		<script src="webgl-obj-loader.js"></script>
+<head>
+    <title>3D Mesh</title>
+    <style>
+        body {
+            background-color: grey;
+        }
 
-		<script id="color-vs" type="x-shader/x-vertex">
+        canvas {
+            background-color: white;
+        }
+    </style>
+    <script src="raf_polyfill.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.4/math.js"></script>
+    <script src="webgl-obj-loader.js"></script>
+
+    <script id="color-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec3 aVertexColor;
 
@@ -25,17 +30,25 @@
 				gl_PointSize = 5.0;
 				vColor = vec4(aVertexColor, 1.0);
 			}
-		</script>
-		
-		<script id="color-fs" type="x-shader/x-fragment">
+
+
+
+
+    </script>
+
+    <script id="color-fs" type="x-shader/x-fragment">
 			varying highp vec4 vColor;
 			
 			void main(void) {
                gl_FragColor = vColor;
 			}
-		</script>
 
-		<script id="textured-vs" type="x-shader/x-vertex">
+
+
+
+    </script>
+
+    <script id="textured-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec2 aTextureCoord;
 
@@ -50,9 +63,13 @@
 				//Pass the textureCoord to the fragment shader 
 				vTextureCoord = aTextureCoord;
 			}
-		</script>
-		
-		<script id="textured-fs" type="x-shader/x-fragment">
+
+
+
+
+    </script>
+
+    <script id="textured-fs" type="x-shader/x-fragment">
 
 			precision mediump float;
 			
@@ -65,9 +82,13 @@
 			void main(void) {
                gl_FragColor = texture2D(u_texture, vTextureCoord);
 			}
-		</script>
 
-		<script id="directionalLight-vs" type="x-shader/x-vertex">
+
+
+
+    </script>
+
+    <script id="directionalLight-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec3 aVertexNormal;	
 			
@@ -100,18 +121,27 @@
 
 				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
 			}
-		</script>
 
-		<script id="directionalLight-fs" type="x-shader/x-fragment">
+
+
+
+
+    </script>
+
+    <script id="directionalLight-fs" type="x-shader/x-fragment">
 			varying highp vec4 vColor;
 
 			void main(void) {
 				gl_FragColor = vColor;
 			}
 
-		</script>
 
-		<script id="directionalLight2-vs" type="x-shader/x-vertex">
+
+
+
+    </script>
+
+    <script id="directionalLight2-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec3 aVertexNormal;	
 			attribute vec2 aTextureCoord;
@@ -137,10 +167,13 @@
 				
 			}
 
-			
-		</script>
 
-		<script id="directionalLight2-fs" type="x-shader/x-fragment">
+
+
+
+    </script>
+
+    <script id="directionalLight2-fs" type="x-shader/x-fragment">
 			precision mediump float;
 			
 			uniform  float uShininess;
@@ -187,9 +220,9 @@
 
 			}
 
-		</script>
+    </script>
 
-		<script id="particle-vs" type="x-shader/x-vertex">
+    <script id="particle-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec3 aVertexColor;
 			attribute float aPointSize;
@@ -204,18 +237,20 @@
 				gl_PointSize = aPointSize;
 				vColor = vec4(aVertexColor, 1.0);
 			}
-		</script>
-		
-		<script id="particle-fs" type="x-shader/x-fragment">
+
+    </script>
+
+    <script id="particle-fs" type="x-shader/x-fragment">
 			varying highp vec4 vColor;
 			
 			void main(void) {
                gl_FragColor = vColor;
 			}
-		</script>
-	
 
-		<script id="textured-vs-fullscreen" type="x-shader/x-vertex">
+    </script>
+
+
+    <script id="textured-vs-fullscreen" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
 			attribute vec2 aTextureCoord;
 
@@ -230,9 +265,10 @@
 				//Pass the textureCoord to the fragment shader 
 				vTextureCoord = aTextureCoord;
 			}
-		</script>
-		
-		<script id="textured-fs-fullscreen" type="x-shader/x-fragment">
+
+    </script>
+
+    <script id="textured-fs-fullscreen" type="x-shader/x-fragment">
 
 			precision mediump float;
 			
@@ -241,80 +277,92 @@
 			
 			//The texture
 			uniform sampler2D u_texture;
-			
-			void main(void) {
-				vec3 texelColor = texture2D(u_texture, vTextureCoord).rgb;
-				//convert to grayscale
-				float g =  0.299 * texelColor.r + 0.587 * texelColor.g + 0.114 * texelColor.b;
-				vec4 color = vec4(g,g,g,1);
-				gl_FragColor = color;
-			}
-		</script>
 
-		<script src="Camera.js"></script>
-		<script src="Texture.js"></script>
-		<script src="Program.js"></script>
-		<script src="Light.js"></script>
-		<script src="Material.js"></script>
-		<script src="Mesh.js"></script>
-		<script src="SceneObject.js"></script>
-		<script src="UI.js"></script>
-		<script src="Input.js"></script>	
-		<script src="ParticleSystem.js"></script>		
-		<script src="Particle.js"></script>			
-		<script src="RenderTexture.js"></script>	
-		<script src="Utils.js"></script>
+            float random( vec2 p )
+            {
+                vec2 K1 = vec2(
+                  23.14069263277926, // e^pi (Gelfond's constant)
+                  2.665144142690225 // 2^sqrt(2) (Gelfondâ€“Schneider constant)
+                );
+                return fract( cos( dot(p,K1) ) * 12345.6789 );
+            }
 
-		 <!-- <script src="scenes/RenderToTextureExample.js"></script>-->
-		 <script src="scenes/FullScreenEffectExample.js"></script>
+            void main() {
 
-		<script>
-			var gl = null,
-				canvas = null;
-			
-			function initWebGL(){
-				canvas = document.getElementById("my-canvas");  
-				try{
-					gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");					
-				}catch(e){
-				}
-				
-				if(gl){
-					Input.init();
-					window.init();
+                vec4 color = texture2D( u_texture, vTextureCoord );
+                vec2 uvRandom = vTextureCoord;
+                uvRandom.y *= random(vec2(uvRandom.y,1.0));
+                color.rgb += random(uvRandom)*0.15;
+                gl_FragColor = vec4( color  );
+            }
 
-					//just call once to start updating
-					loop();
-					
-				}else{	
-					alert(  "Error: Your browser does not appear to support WebGL.");
-				}
-			}
 
-			function loop(){
-				if(window.renderTextureCameras){
-					for(var i=0; i<window.renderTextureCameras.length; i++){
-						window.renderTextureCameras[i].update();
-					}
-				}
-				window.mainCamera.update();
+    </script>
 
-				window.update();
+    <script src="Camera.js"></script>
+    <script src="Texture.js"></script>
+    <script src="Program.js"></script>
+    <script src="Light.js"></script>
+    <script src="Material.js"></script>
+    <script src="Mesh.js"></script>
+    <script src="SceneObject.js"></script>
+    <script src="UI.js"></script>
+    <script src="Input.js"></script>
+    <script src="ParticleSystem.js"></script>
+    <script src="Particle.js"></script>
+    <script src="RenderTexture.js"></script>
+    <script src="Utils.js"></script>
 
-				Input.update();
+    <!-- <script src="scenes/RenderToTextureExample.js"></script>-->
+    <script src="scenes/FullScreenEffectExample.js"></script>
 
-				//setTimeout(loop, 0);
-				//request a new update causes loop
-				requestAnimationFrame(loop, canvas);
-			}			
-		</script>
-	</head>
-	<body onload="initWebGL()">
-		<canvas id="my-canvas" width="800" height="600">
-			Your browser does not support the HTML5 canvas element.
-		</canvas>
-		<div id="ui">
+    <script>
+        var gl = null,
+            canvas = null;
 
-		</div>
-	</body>
+        function initWebGL() {
+            canvas = document.getElementById("my-canvas");
+            try {
+                gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+            } catch (e) {
+            }
+
+            if (gl) {
+                Input.init();
+                window.init();
+
+                //just call once to start updating
+                loop();
+
+            } else {
+                alert("Error: Your browser does not appear to support WebGL.");
+            }
+        }
+
+        function loop() {
+            if (window.renderTextureCameras) {
+                for (var i = 0; i < window.renderTextureCameras.length; i++) {
+                    window.renderTextureCameras[i].update();
+                }
+            }
+            window.mainCamera.update();
+
+            window.update();
+
+            Input.update();
+
+            //setTimeout(loop, 0);
+            //request a new update causes loop
+            requestAnimationFrame(loop, canvas);
+        }
+    </script>
+</head>
+<body onload="initWebGL()">
+<canvas id="my-canvas" width="800" height="600">
+    Your browser does not support the HTML5 canvas element.
+</canvas>
+<div id="ui">
+
+</div>
+</body>
 </html>
