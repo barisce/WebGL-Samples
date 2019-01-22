@@ -274,6 +274,8 @@
 			
 			//Passed in from the vertex shader
 			varying vec2 vTextureCoord;
+
+			//uniform float amount;
 			
 			//The texture
 			uniform sampler2D u_texture;
@@ -288,10 +290,10 @@
             }
 
             void main() {
-
+                float amount = 0.0;
                 vec4 color = texture2D( u_texture, vTextureCoord );
                 vec2 uvRandom = vTextureCoord;
-                uvRandom.y *= random(vec2(uvRandom.y,1.0));
+                uvRandom.y *= random(vec2(uvRandom.y,amount));
                 color.rgb += random(uvRandom)*0.15;
                 gl_FragColor = vec4( color  );
             }

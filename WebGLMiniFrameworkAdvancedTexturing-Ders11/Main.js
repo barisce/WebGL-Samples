@@ -221,6 +221,20 @@ window.init = function(){
 */
     //var diffuseTexture = new Texture('https://webglfundamentals.org/webgl/resources/f-texture.png');
     //var normalTexture = new Texture("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Normal_map_example_-_Map.png/600px-Normal_map_example_-_Map.png");
+
+    /*
+    var fTexture = new Texture('https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/FloorTexture.jpg');
+
+    var material3 = new Material(perFragmentLightProgramWithTexture);
+    material3.setTexture(fTexture);
+
+    loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/EmptyRoom.obj", function (mesh3) { // bird bu
+        window.bunny = new SceneObject(mesh3, material3);
+        window.bunny.localPosition = [0, 0, 0];
+        window.bunny.scale = [1,1,1];
+        window.bunny.localEulerAngles = [0, 0, 0];
+    });
+    */
     
     var diffuseTexture = new Texture("https://upload.wikimedia.org/wikipedia/commons/2/2c/IntP_Brick.png");
     var normalTexture = new Texture("https://upload.wikimedia.org/wikipedia/commons/8/86/IntP_Brick_NormalMap.png");
