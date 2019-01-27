@@ -1,0 +1,457 @@
+<!-- Baris Celik - N18136522 -->
+<!doctype html>
+<html>
+<head>
+    <title>Baris Celik</title>
+    <style>
+        body {
+            background-color: grey;
+        }
+
+        canvas {
+            background-color: white;
+        }
+    </style>
+    <script src="raf_polyfill.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.4/math.js"></script>
+    <script src="webgl-obj-loader.js"></script>
+
+    <script id="color-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec3 aVertexColor;
+
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+  
+			varying highp vec4 vColor;	
+
+			void main(void) {
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+				gl_PointSize = 5.0;
+				vColor = vec4(aVertexColor, 1.0);
+			}
+    </script>
+
+    <script id="color-fs" type="x-shader/x-fragment">
+			varying highp vec4 vColor;
+			
+			void main(void) {
+               gl_FragColor = vColor;
+			}
+    </script>
+
+    <script id="textured-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec2 aTextureCoord;
+
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+  
+			varying vec2 vTextureCoord;
+			
+			void main(void) {
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+
+				//Pass the textureCoord to the fragment shader 
+				vTextureCoord = aTextureCoord;
+			}
+    </script>
+
+    <script id="textured-fs" type="x-shader/x-fragment">
+
+			precision mediump float;
+			
+			//Passed in from the vertex shader
+			varying vec2 vTextureCoord;
+			
+			//The texture
+			uniform sampler2D u_texture;
+			
+			void main(void) {
+               gl_FragColor = texture2D(u_texture, vTextureCoord);
+			}
+    </script>
+
+    <script id="particle-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec3 aVertexColor;
+			attribute float aPointSize;
+
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+  
+			varying highp vec4 vColor;	
+
+			void main(void) {
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+				gl_PointSize = aPointSize;
+				vColor = vec4(aVertexColor, 1.0);
+			}
+    </script>
+
+    <script id="particle-fs" type="x-shader/x-fragment">
+			varying highp vec4 vColor;
+			
+			void main(void) {
+               gl_FragColor = vColor;
+			}
+    </script>
+
+    <script id="pointLight-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec3 aCameraPos;
+			attribute vec3 aVertexNormal;
+			attribute vec2 aTextureCoord;
+
+			uniform mat4 uModelMatrix;
+			uniform mat4 uMVMatrix;
+			//uniform mat4 uMVITMatrix;
+			uniform mat4 uInverseModelMatrix;
+			uniform mat4 uPMatrix;
+			uniform vec3 uLightPosition;
+
+			varying vec2 vTextureCoord;
+			varying vec3 vLightPosition;
+			varying vec3 vFragmentPosition;
+
+			void main(void){
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+
+				vLightPosition = uLightPosition;
+				vFragmentPosition = vec3(uModelMatrix * vec4(aVertexPosition, 1.0));
+
+				vTextureCoord = aTextureCoord;
+			}
+    </script>
+
+    <script id="pointLight-fs" type="x-shader/x-fragment">
+			precision highp float;
+
+			uniform sampler2D uDiffuseTexture;
+			uniform sampler2D uNormalTexture;
+
+			uniform vec3 uInverseLightDirection;
+			uniform float uInnerLimit;
+			uniform float uOuterLimit;
+			uniform float uAttenuationFactor;
+
+			varying vec2 vTextureCoord;
+			varying vec3 vLightPosition;
+			varying vec3 vFragmentPosition;
+
+			void main(void){
+				vec3 lightDirection = vLightPosition - vFragmentPosition;
+				float dist = length(lightDirection);
+				lightDirection = normalize(lightDirection);
+				float attenuation = 1.0 / (1.0+(dist*dist)*uAttenuationFactor);
+
+				//map from [0,1] to [-1,1]
+				//vec3 n = normalize(texture2D(uNormalTexture, vTextureCoord).rgb * 2.0 - 1.0);
+				//float diffuse = max(dot(lightDirection, n), 0.0);
+
+				float dotFromDirection = dot(lightDirection, uInverseLightDirection);
+                float inLight = smoothstep(uInnerLimit, uOuterLimit, dotFromDirection);
+				//float light = inLight * dot(normal, lightDirection);
+
+				vec3 albedo = texture2D(uDiffuseTexture, vTextureCoord).rgb;
+				vec3 ambient = 0.2 * albedo;
+
+				gl_FragColor = vec4(attenuation * inLight * albedo + ambient, 1.0);   //diffuse *
+			}
+    </script>
+
+    <script id="pointLightNormalMapping2-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec3 aCameraPos;
+			//attribute vec3 aVertexNormal;
+			attribute vec3 aVertexTangent;
+			attribute vec3 aVertexBitangent;
+			attribute vec2 aTextureCoord;
+			
+			uniform mat4 uMVMatrix;
+			uniform mat4 uModelMatrix;
+			uniform mat4 uInverseModelMatrix;
+			uniform mat4 uPMatrix;
+			uniform vec3 uLightPosition;
+
+			varying vec2 vTextureCoord;
+			//varying vec3 vVertexNormal;
+			varying vec3 vLightPositionInTangentSpace;
+			varying vec3 vFragmentPositionInTangentSpace;
+
+			varying vec3 vSurfaceToLight;
+            varying vec3 vSurfaceToView;
+
+			mat3 transpose(in mat3 m){
+				vec3 m0 = m[0];
+				vec3 m1 = m[1];
+				vec3 m2 = m[2];
+						
+				return mat3(
+					vec3(m0.x, m1.x, m2.x),
+					vec3(m0.y, m1.y, m2.y),
+					vec3(m0.z, m1.z, m2.z)
+				);
+			}			
+			
+			void main(void){
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+				vec3 vertexNormal = cross(aVertexBitangent, aVertexTangent);
+
+				//basis vectors of tangent space in world coordinates
+				vec3 t = normalize(mat3(uInverseModelMatrix) * aVertexTangent);
+				vec3 b = normalize(mat3(uInverseModelMatrix) * aVertexBitangent);
+				vec3 n = normalize(mat3(uInverseModelMatrix) * vertexNormal);
+				mat3 tbn = transpose(mat3(t, b, n));
+
+			    //vVertexNormal = tbn * aVertexNormal;
+
+				vLightPositionInTangentSpace = tbn * uLightPosition;
+				
+				vFragmentPositionInTangentSpace = tbn * vec3(uModelMatrix * vec4(aVertexPosition, 1.0));
+		 
+				vTextureCoord = aTextureCoord;
+
+				vec3 surfaceWorldPosition = (uModelMatrix * vec4(aVertexPosition, 1.0)).xyz;
+				vec3 uViewWorldPosition = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz;
+
+                vSurfaceToLight = uLightPosition - surfaceWorldPosition;
+                vSurfaceToView = surfaceWorldPosition - surfaceWorldPosition;
+			}
+    </script>
+
+    <script id="pointLightNormalMapping2-fs" type="x-shader/x-fragment">
+			precision highp float;
+						
+			uniform sampler2D uDiffuseTexture;
+			uniform sampler2D uNormalTexture;
+
+			uniform vec3 uInverseLightDirection;
+			uniform float uInnerLimit;
+			uniform float uOuterLimit;
+			uniform float uAttenuationFactor;
+
+			varying vec2 vTextureCoord;
+			//varying vec3 vVertexNormal;
+			varying vec3 vLightPositionInTangentSpace;
+			varying vec3 vFragmentPositionInTangentSpace;
+
+			varying vec3 vSurfaceToLight;
+            varying vec3 vSurfaceToView;
+
+			void main(void){
+                //vec3 normal = normalize(vVertexNormal);
+				vec3 lightDirection = vLightPositionInTangentSpace - vFragmentPositionInTangentSpace;
+				float dist = length(lightDirection);
+				lightDirection = normalize(lightDirection);
+				float attenuation = 1.0 / (1.0+(dist*dist)*uAttenuationFactor);
+
+				//map from [0,1] to [-1,1]
+				vec3 n = normalize(texture2D(uNormalTexture, vTextureCoord).rgb * 2.0 - 1.0);
+
+				float diffuse = max(dot(lightDirection, n), 0.0);
+
+                vec3 surfaceToLightDirection = normalize(vSurfaceToLight);
+                vec3 surfaceToViewDirection = normalize(vSurfaceToView);
+
+                //float dotFromDirection = dot(lightDirection, uInverseLightDirection);
+                //float inLight = smoothstep(uInnerLimit, uOuterLimit, dotFromDirection);
+				//float light = inLight * dot(normal, surfaceToLightDirection);
+
+				float dotFromDirection = dot(lightDirection, uInverseLightDirection);
+                float inLight = smoothstep(uInnerLimit, uOuterLimit, dotFromDirection);
+				//float light = inLight * dot(normal, lightDirection);
+
+				vec3 albedo = texture2D(uDiffuseTexture, vTextureCoord).rgb;
+				vec3 ambient = 0.3 * albedo;
+
+				gl_FragColor = vec4( attenuation * diffuse * inLight * albedo + ambient, 1.0);
+			}
+    </script>
+
+    <script id="environmentMapping-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec3 aVertexTangent;
+			attribute vec3 aVertexBitangent;
+			
+			uniform mat4 uMVMatrix;
+			uniform mat4 uModelMatrix;
+			uniform mat4 uPMatrix;
+			uniform vec3 uCameraPosition;
+
+			varying vec3 vCameraToFragment;
+			varying vec3 vNormal;
+			
+			void main(void){
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+
+				vec3 vertexNormal = cross(aVertexBitangent, aVertexTangent);
+
+				vNormal = normalize((uModelMatrix * vec4(vertexNormal, 0.0)).xyz);
+			
+				vec3 vertexPositionInWorldSpace = vec3(uModelMatrix * vec4(aVertexPosition, 1.0));
+
+				vCameraToFragment = vertexPositionInWorldSpace - uCameraPosition;
+			}
+    </script>
+
+    <script id="environmentMapping-fs" type="x-shader/x-fragment">
+			precision highp float;
+						
+			uniform samplerCube uEnvironmentCubemap;		
+
+			varying vec3 vCameraToFragment;
+			varying vec3 vNormal;
+
+			void main(void){						
+				vec3 normalWorld = normalize(vNormal);
+				vec3 cameraToFragment = normalize(vCameraToFragment);
+
+				//reflect method calculates the reflection direction for an incident vector
+				vec3 lookup = reflect(cameraToFragment, normalWorld);
+
+				//The textureCube function returns a texel, i.e. the (color) value of the texture for the given coordinates.
+				gl_FragColor = textureCube(uEnvironmentCubemap, lookup);
+			}
+    </script>
+
+    <script id="skybox-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+
+			uniform mat4 uMVMatrix;
+			uniform mat4 uPMatrix;
+  
+			varying vec3 vTextureCoord;
+			
+			void main(void) {
+				vTextureCoord = aVertexPosition;
+
+				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+			}
+    </script>
+
+    <script id="skybox-fs" type="x-shader/x-fragment">
+
+			precision highp float;
+			
+			varying vec3 vTextureCoord;
+			
+			uniform samplerCube cubeTexture;
+			
+			void main(void) {
+               gl_FragColor = textureCube(cubeTexture, vTextureCoord);
+			}
+    </script>
+
+    <script id="textured-vs-fullscreen" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			attribute vec2 aTextureCoord;
+
+			varying vec2 vTextureCoord;
+
+			void main(void) {
+				gl_Position = vec4(aVertexPosition, 1.0);
+
+				//Pass the textureCoord to the fragment shader
+				vTextureCoord = aTextureCoord;
+			}
+    </script>
+
+    <script id="textured-fs-fullscreen" type="x-shader/x-fragment">
+			precision mediump float;
+
+			varying vec2 vTextureCoord;
+			uniform float uGrainEffect;
+			uniform sampler2D uTexture;
+
+            float random( vec2 p )
+            {
+                vec2 K1 = vec2(
+                  23.14069263277926, // e^pi
+                  2.665144142690225 // 2^sqrt(2)
+                );
+                return fract( cos( dot(p,K1) ) * 12345.6789 );
+            }
+
+            void main() {
+                vec4 color = texture2D( uTexture, vTextureCoord );
+                vec2 uvRandom = vTextureCoord;
+                uvRandom.y *= random(vec2(uvRandom.y,uGrainEffect));
+                color.rgb += random(uvRandom)*0.15;
+                gl_FragColor = vec4( color  );
+            }
+    </script>
+
+    <script src="Camera.js"></script>
+    <script src="Texture.js"></script>
+    <script src="Program.js"></script>
+    <script src="Light.js"></script>
+    <script src="Material.js"></script>
+    <script src="Mesh.js"></script>
+    <script src="SceneObject.js"></script>
+    <script src="UI.js"></script>
+    <script src="Input.js"></script>
+    <script src="ParticleSystem.js"></script>
+    <script src="Particle.js"></script>
+    <script src="RenderTexture.js"></script>
+    <script src="CubeMap.js"></script>
+    <script src="Skybox.js"></script>
+    <script src="Utils.js"></script>
+
+    <!-- <script src="scenes/RenderToTextureExample.js"></script>-->
+    <!--<script src="scenes/SkyboxExample.js"></script> -->
+    <!--<script src="scenes/NormalMappingExample.js"></script>-->
+    <script src="scenes/RoomScene.js"></script>
+    <!--<script src="scenes/EnvironmentMappingExample.js"></script>	-->
+
+    <script>
+        var gl = null,
+            canvas = null;
+
+        function initWebGL() {
+            canvas = document.getElementById("my-canvas");
+            try {
+                gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+            } catch (e) {
+            }
+
+            if (gl) {
+                Input.init();
+                window.init();
+
+                //just call once to start updating
+                loop();
+
+            } else {
+                alert("Error: Your browser does not appear to support WebGL.");
+            }
+        }
+
+        function loop() {
+            if (window.renderTextureCameras) {
+                for (var i = 0; i < window.renderTextureCameras.length; i++) {
+                    window.renderTextureCameras[i].update();
+                }
+            }
+            window.mainCamera.update();
+
+            window.update();
+
+            Input.update();
+
+            //setTimeout(loop, 0);
+            //request a new update causes loop
+            requestAnimationFrame(loop, canvas);
+        }
+    </script>
+</head>
+<body onload="initWebGL()">
+<canvas id="my-canvas" width="1400" height="900">
+    Your browser does not support the HTML5 canvas element.
+</canvas>
+<div id="ui">
+
+</div>
+</body>
+</html>
