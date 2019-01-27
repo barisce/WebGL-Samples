@@ -18,15 +18,12 @@ window.init = function(){
     camera.lookAt = [0.0, 1.0, 0.0];
 
     window.rtCamera = new Camera(renderTexture, [1, 0.5, 1, 1]);
-    rtCamera.position = [0.0, 3.0, 6];
-    rtCamera.lookAt = [0.0, 1.0, 0.0];
+    rtCamera.position = [-9.244268826299805, 8.09916378872475, 8.677282909144928];
+    rtCamera.lookAt = [-8.721283355182509, 7.906654163260017, 7.846965956949173];
     rtCamera.setSkybox(skybox);
     rtCamera.setFreeMove(true);
 
-    // var diffuseTexture = new Texture("https://upload.wikimedia.org/wikipedia/commons/2/2c/IntP_Brick.png");
-    // var normalTexture = new Texture("https://upload.wikimedia.org/wikipedia/commons/8/86/IntP_Brick_NormalMap.png");
-
-    var normalProgram = new Program('pointLight-vs', 'pointLight-fs');
+    var normalProgram = new Program('spotLight-vs', 'spotLight-fs');
 
     normalProgram.setVertexPositionAttributeName("aVertexPosition");
     normalProgram.setVertexNormalAttributeName("aVertexNormal");
@@ -38,10 +35,8 @@ window.init = function(){
     normalProgram.setModelMatrixUniformName("uModelMatrix");
 
     window.light = new Light(LightType.Spot);
-
-    var simpleProgram = new Program('color-vs', 'color-fs');
-    simpleProgram.setVertexPositionAttributeName("aVertexPosition");
-    simpleProgram.setVertexColorAttributeName("aVertexColor");
+    window.light.direction = rtCamera.lookAt;
+    window.light.isFreeMoveEnabled = true;
 
     var texturedProgram = new Program('textured-vs-fullscreen', 'textured-fs-fullscreen');
     texturedProgram.setVertexPositionAttributeName("aVertexPosition");
@@ -56,14 +51,8 @@ window.init = function(){
 
     window.grainEffect = 0.0;
 
-    window.light.direction = rtCamera.lookAt;
-    window.light.isFreeMoveEnabled = true;
-
     prepareScene(normalProgram, renderTexture);
 
-    var attenuationSlider = createSlider("Attenuation :\t", window.light.attenuation, 0.001, 1, function () {
-        window.light.attenuation = this.value;
-    });
     var innerSlider = createSlider("Inner :\t", window.light.innerLimit, 0, 2, function () {
         window.light.innerLimit = this.value;
     });
@@ -91,24 +80,9 @@ window.update = function(){
     window.light.position[1] = window.rtCamera.position[1];
     window.light.position[2] = window.rtCamera.position[2];
 
-    // if(Input.isKeyDown(Keys.RightArrow)){
-    //     window.light.direction[0] -= 0.1;
-    // }
-    // if(Input.isKeyDown(Keys.LeftArrow)){
-    //     window.light.direction[0] += 0.1;
-    // }
-    // if(Input.isKeyDown(Keys.UpArrow)){
-    //     window.light.direction[1] += 0.1;
-    // }
-    // if(Input.isKeyDown(Keys.DownArrow)){
-    //     window.light.direction[1] -= 0.1;
-    // }
 };
 
 prepareScene = function(normalProgram){
-    // var diffuseTexture = new Texture("https://upload.wikimedia.org/wikipedia/commons/2/2c/IntP_Brick.png");
-    // var normalTexture = new Texture("https://upload.wikimedia.org/wikipedia/commons/8/86/IntP_Brick_NormalMap.png");
-    // var normalProgram = new Program('pointLightNormalMapping-vs', 'pointLightNormalMapping-fs');
 
     var floorTexture = new Texture("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/texture/FloorTexture.jpg");
     var wallTexture = new Texture("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/texture/WallTexture.jpg");
@@ -120,6 +94,9 @@ prepareScene = function(normalProgram){
     var whiteWoodTexture = new Texture("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/texture/wood_white.jpg");
     var woodTileBaseTexture = new Texture("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/texture/WoodTile_basecolor.jpg");
     var tvTexture = new Texture("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/texture/tv.jpg");
+    var ps4Texture = new Texture("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/texture/PS4.jpg");
+    var jackDanielsTexture = new Texture("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/texture/JackDaniels.jpg");
+    var clothTexture = new Texture("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/texture/cloth.jpg");
 
     var woodTileMaterial = new Material(normalProgram);
     woodTileMaterial.setTexture(woodTileBaseTexture);
@@ -148,8 +125,17 @@ prepareScene = function(normalProgram){
     var glassMaterial = new Material(normalProgram);
     glassMaterial.setTexture(glassTexture);
 
-    var tvMaterial = new Material(normalProgram);
-    tvMaterial.setTexture(tvTexture);
+    var bigTvMaterial = new Material(normalProgram);
+    bigTvMaterial.setTexture(tvTexture);
+
+    var ps4Material = new Material(normalProgram);
+    ps4Material.setTexture(ps4Texture);
+
+    var jackDanielsMaterial = new Material(normalProgram);
+    jackDanielsMaterial.setTexture(jackDanielsTexture);
+
+    var clothMaterial = new Material(normalProgram);
+    clothMaterial.setTexture(clothTexture);
 
     window.ground = new SceneObject(createQuad(10),floorMaterial);
     window.ground.localPosition = [0, 0, 0];
@@ -187,17 +173,10 @@ prepareScene = function(normalProgram){
 
     loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/coffee_mug.obj", function (mesh) {
         window.mug = new SceneObject(mesh, glassMaterial);
-        window.mug.localPosition = [1, 4.25, -7];
+        window.mug.localPosition = [0, 4.25, -7];
         window.mug.localEulerAngles = [0, 0, 0];
         window.mug.scale = [0.01, 0.01, 0.01];
     });
-
-    // loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/kitchen_furniture.obj", function (mesh) {
-    //     window.kitchenfurniture = new SceneObject(mesh, marbleMaterial);
-    //     window.kitchenfurniture.localPosition = [2, 0, 2];
-    //     window.kitchenfurniture.localEulerAngles = [0, 0, 0];
-    //     window.kitchenfurniture.scale = [0.02, 0.02, 0.02];
-    // });
 
     loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/table_and_chair.obj", function (mesh) {
         window.tableandchair = new SceneObject(mesh, woodMaterial);
@@ -207,9 +186,51 @@ prepareScene = function(normalProgram){
     });
 
     loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/Samsung_LED_TV.obj", function (mesh) {
-        window.windows = new SceneObject(mesh, tvMaterial);
-        window.windows.localPosition = [3.55, 4.22, -7];
-        window.windows.localEulerAngles = [90, 180, 180];
+        window.windows = new SceneObject(mesh, bigTvMaterial);
+        window.windows.localPosition = [-7, 3.9, -2.3];
+        window.windows.localEulerAngles = [90, 160, 180];
         window.windows.scale = [0.2, 0.2, 0.2];
+    });
+
+    loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/Bourbon.obj", function (mesh) {
+        window.windows = new SceneObject(mesh, jackDanielsMaterial);
+        window.windows.localPosition = [-0.57, 4.22, -8.2];
+        window.windows.localEulerAngles = [0, 0, 0];
+        window.windows.scale = [0.05, 0.05, 0.05];
+    });
+
+    loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/book.obj", function (mesh) {
+        window.windows = new SceneObject(mesh, clothMaterial);
+        window.windows.localPosition = [-5.6, 4.05, -1.5];
+        window.windows.localEulerAngles = [90, 35, 0];
+        window.windows.scale = [0.5, 0.5, 0.5];
+    });
+
+    loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/dining_table.obj", function (mesh) {
+        window.windows = new SceneObject(mesh, woodAltMaterial);
+        window.windows.localPosition = [2, 0, 7];
+        window.windows.localEulerAngles = [0, 0, 0];
+        window.windows.scale = [0.08, 0.08, 0.08];
+    });
+
+    loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/ikea_box.obj", function (mesh) {
+        window.windows = new SceneObject(mesh, realWoodMaterial);
+        window.windows.localPosition = [7.5, 1, -4];
+        window.windows.localEulerAngles = [0, 210, 0];
+        window.windows.scale = [0.5, 0.5, 0.5];
+    });
+
+    loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/pc.obj", function (mesh) {
+        window.windows = new SceneObject(mesh, ps4Material);
+        window.windows.localPosition = [3.55, 3, -8];
+        window.windows.localEulerAngles = [0, 0, 0];
+        window.windows.scale = [0.03, 0.03, 0.03];
+    });
+
+    loadObjMesh("https://raw.githubusercontent.com/barisce/WebGL-Samples/master/objects/obj/sofa.obj", function (mesh) {
+        window.windows = new SceneObject(mesh, clothMaterial);
+        window.windows.localPosition = [7.5, 0, 4];
+        window.windows.localEulerAngles = [0, -90, 0];
+        window.windows.scale = [0.005, 0.005, 0.005];
     });
 };
