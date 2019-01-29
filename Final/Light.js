@@ -1,7 +1,7 @@
 function Light(lightType = LightType.Directional){
     
     this.type = lightType;
-    this.attenuation = 0.015;
+    this.attenuation = 1;
 
     if(this.type == LightType.Directional || this.type == LightType.Spot){
         this.direction = [0.0, 0.0, 0.0];
@@ -12,8 +12,8 @@ function Light(lightType = LightType.Directional){
     }
 
     if(this.type == LightType.Spot){
-        this.innerLimit = 0.1;
-        this.outerLimit = 2;
+        this.innerLimit = 9.9;
+        this.outerLimit = 10;
     }
 
     window.light = this;
@@ -44,7 +44,6 @@ function Light(lightType = LightType.Directional){
         if(this.type == LightType.Spot){
             program.setUniform1f("uInnerLimit", Math.cos(this.innerLimit));
             program.setUniform1f("uOuterLimit", Math.cos(this.outerLimit));
-            program.setUniform3fv("aCameraPos", window.rtCamera.position);
         }
     };
 

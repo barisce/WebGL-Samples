@@ -100,13 +100,11 @@
 
     <script id="spotLight-vs" type="x-shader/x-vertex">
 			attribute vec3 aVertexPosition;
-			//attribute vec3 aCameraPos;
-			//attribute vec3 aVertexNormal;
+			attribute vec3 aVertexNormal;
 			attribute vec2 aTextureCoord;
 
 			uniform mat4 uModelMatrix;
 			uniform mat4 uMVMatrix;
-			//uniform mat4 uMVITMatrix;
 			uniform mat4 uInverseModelMatrix;
 			uniform mat4 uPMatrix;
 			uniform vec3 uLightPosition;
@@ -114,9 +112,13 @@
 			varying vec2 vTextureCoord;
 			varying vec3 vLightPosition;
 			varying vec3 vFragmentPosition;
+			//varying vec3 vVertexNormal;
+
 
 			void main(void){
 				gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+
+				//vVertexNormal = mat3(uInverseModelMatrix) * aVertexNormal;
 
 				vLightPosition = uLightPosition;
 				vFragmentPosition = vec3(uModelMatrix * vec4(aVertexPosition, 1.0));
@@ -135,29 +137,45 @@
 			uniform float uInnerLimit;
 			uniform float uOuterLimit;
 			uniform float uAttenuationFactor;
+			uniform float uShininess;
 
 			varying vec2 vTextureCoord;
 			varying vec3 vLightPosition;
 			varying vec3 vFragmentPosition;
+			//varying vec3 vVertexNormal;
 
 			void main(void){
 				vec3 lightDirection = vLightPosition - vFragmentPosition;
 				float dist = length(lightDirection);
 				lightDirection = normalize(lightDirection);
+				vec3 inverseLightDirection = normalize(uInverseLightDirection);
 				float attenuation = 1.0 / (1.0+(dist*dist)*uAttenuationFactor);
 
 				//map from [0,1] to [-1,1]
-				//vec3 n = normalize(texture2D(uNormalTexture, vTextureCoord).rgb * 2.0 - 1.0);
-				//float diffuse = max(dot(lightDirection, n), 0.0);
+				vec3 n = normalize(texture2D(uNormalTexture, vTextureCoord).rgb * 2.0 - 1.0);
+				float diffuse = max(dot(lightDirection, n), 0.0);
 
-				float dotFromDirection = dot(lightDirection, uInverseLightDirection);
-                float inLight = smoothstep(uInnerLimit, uOuterLimit, dotFromDirection);
+				float theta = dot(lightDirection, inverseLightDirection);
+				float epsilon   = uInnerLimit - uOuterLimit;
+                float intensity = clamp((theta - uOuterLimit) / epsilon, 0.0, 1.0);
+
+                // specular light calculation -- not working properly
+                //vec3 normal = normalize(vVertexNormal);
+                //vec3 halfVector = normalize(lightDirection + inverseLightDirection);
+                //float inLight = smoothstep(uInnerLimit, uOuterLimit, theta);
 				//float light = inLight * dot(normal, lightDirection);
+				//float specular = inLight * pow(dot(normal, halfVector), uShininess);
 
 				vec3 albedo = texture2D(uDiffuseTexture, vTextureCoord).rgb;
 				vec3 ambient = 0.2 * albedo;
 
-				gl_FragColor = vec4(attenuation * inLight * albedo + ambient, 1.0);   //diffuse *
+                if (theta < uOuterLimit) {  // illuminated
+				    gl_FragColor = vec4(attenuation * intensity * (diffuse + albedo + ambient), 1.0);
+				} else {
+				    // comment out to hide ambient light
+				    //gl_FragColor = vec4(attenuation * intensity * ambient, 1.0);
+				    gl_FragColor = vec4(attenuation * intensity + ambient, 1.0);
+				}
 			}
     </script>
 

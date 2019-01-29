@@ -32,6 +32,7 @@ window.init = function(){
     normalProgram.setTextureUniformName("uDiffuseTexture");
     normalProgram.setNormalTextureUniformName("uNormalTexture");
     normalProgram.setInverseModelMatrixUniformName("uInverseModelMatrix");
+    normalProgram.setShininessUniformName("uShininess");
     normalProgram.setModelMatrixUniformName("uModelMatrix");
 
     window.light = new Light(LightType.Spot);
@@ -53,10 +54,10 @@ window.init = function(){
 
     prepareScene(normalProgram, renderTexture);
 
-    var innerSlider = createSlider("Inner :\t", window.light.innerLimit, 0, 2, function () {
+    var innerSlider = createSlider("Inner :\t", window.light.innerLimit, 9.35, 11, function () {
         window.light.innerLimit = this.value;
     });
-    var outerSlider = createSlider("Outer :\t", window.light.outerLimit, 0, 2, function () {
+    var outerSlider = createSlider("Outer :\t", window.light.outerLimit, 9.35, 11, function () {
         window.light.outerLimit = this.value;
     });
 };

@@ -133,14 +133,6 @@ function Program(vertexShaderElementId, fragmentShaderElementId, projectionMatri
             gl.uniformMatrix4fv(this.inverseModelMatrixUniform, false, inverseTransposeM);
         }
 
-        if (gl.getUniformLocation(this.glProgram, "uMVITMatrix") != null) {
-            var mvitMatrix = mat4.create();
-            mat4.invert(mvitMatrix, mvMatrix);
-            mat4.transpose(mvitMatrix, mvitMatrix);
-            gl.uniformMatrix4fv(gl.getUniformLocation(this.glProgram, "uMVITMatrix"), false, mvitMatrix);
-
-        }
-
         if (this.cameraPositionUniform) {
             gl.uniform3fv(this.cameraPositionUniform, camera.position);
         }
